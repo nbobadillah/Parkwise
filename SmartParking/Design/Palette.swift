@@ -21,12 +21,18 @@ enum Palette {
     static let greenSoft = Color(hex: 0xE3F6EA)
     static let amberInk = Color(hex: 0xC2780F)
     static let amberSoft = Color(hex: 0xFDF2D6)
+    static let amberText = Color(hex: 0xC37B1F)
     static let redInk = Color(hex: 0xC63A20)
     static let redSoft = Color(hex: 0xFAE4DE)
+    static let alertRed = Color(hex: 0xD74D3D)
+    static let alertSoft = Color(hex: 0xFDE6E2)
+    static let alertText = Color(hex: 0xA84D38)
     static let neutral = Color(hex: 0xF1F3F7)
     static let slate = Color(hex: 0x98A2B3)
     static let violetSoft = Color(hex: 0xEFEBFD)
     static let violetInk = Color(hex: 0x5B3BD1)
+    static let purple = Color(hex: 0x7C5BE8)
+    static let buttonGray = Color(hex: 0xDDE2EA)
 }
 
 struct Tint {

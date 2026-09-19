@@ -16,23 +16,11 @@ struct RootView: View {
     private var content: some View {
         switch tab {
         case .home:
-            HomeView(
-                levels: ParkingData.levels,
-                onOpenLevel: { level in
-                    levelCode = level.code
-                    tab = .map
-                },
-                onFindSpot: { tab = .map },
-                onFindCar: { tab = .map }
-            )
+            CampusFullView()
         case .map:
             ParkingMapView(levelCode: $levelCode)
         case .reserve:
-            PlaceholderView(
-                title: "Reservations",
-                message: "Your upcoming and past parking reservations appear here.",
-                icon: "calendar"
-            )
+            ReserveSpotView()
         case .profile:
             PlaceholderView(
                 title: "Profile",
