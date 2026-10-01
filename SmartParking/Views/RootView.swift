@@ -1,38 +1,82 @@
 import SwiftUI
 
+enum HomeRoute {
+    case dashboard
+    case findSpot
+}
+
+enum MapRoute {
+    case floor
+    case findCar
+}
+
 struct RootView: View {
     @State private var tab: AppTab = .home
     @State private var levelCode = ParkingData.levels[0].code
+    @State private var homeRoute: HomeRoute = .dashboard
+    @State private var mapRoute: MapRoute = .floor
 
     var body: some View {
         VStack(spacing: 0) {
             content
-            AppTabBar(selection: $tab)
+            AppTabBar(selection: tabSelection)
         }
         .background(Palette.screen)
+    }
+
+    // Al tocar cualquier pestaña se vuelve a la pantalla principal de cada sección
+    private var tabSelection: Binding<AppTab> {
+        Binding(
+            get: { tab },
+            set: { newTab in
+                homeRoute = .dashboard
+                mapRoute = .floor
+                tab = newTab
+            }
+        )
     }
 
     @ViewBuilder
     private var content: some View {
         switch tab {
         case .home:
-            HomeView(
-                levels: ParkingData.levels,
-                onOpenLevel: { level in
-                    levelCode = level.code
-                    tab = .map
-                },
-                onFindSpot: { tab = .map },
-                onFindCar: { tab = .map }
-            )
+            if ParkingData.levels.allSatisfy({ $0.free == 0 }) {
+                CampusFullView()
+            } else {
+                switch homeRoute {
+                case .dashboard:
+                    HomeView(
+                        levels: ParkingData.levels,
+                        onOpenLevel: { level in
+                            levelCode = level.code
+                            mapRoute = .floor
+                            tab = .map
+                        },
+                        onFindSpot: { homeRoute = .findSpot },
+                        onFindCar: {
+                            mapRoute = .findCar
+                            tab = .map
+                        }
+                    )
+                case .findSpot:
+                    FindSpotView(
+                        onReserve: { spot in
+                            levelCode = spot.levelCode
+                            mapRoute = .floor
+                            tab = .map
+                        }
+                    )
+                }
+            }
         case .map:
-            ParkingMapView(levelCode: $levelCode)
+            switch mapRoute {
+            case .floor:
+                ParkingMapView(levelCode: $levelCode)
+            case .findCar:
+                FindCarView()
+            }
         case .reserve:
-            PlaceholderView(
-                title: "Reservations",
-                message: "Your upcoming and past parking reservations appear here.",
-                icon: "calendar"
-            )
+            ReserveSpotView()
         case .profile:
             PlaceholderView(
                 title: "Profile",
