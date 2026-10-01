@@ -33,6 +33,8 @@ enum Palette {
     static let violetInk = Color(hex: 0x5B3BD1)
     static let purple = Color(hex: 0x7C5BE8)
     static let buttonGray = Color(hex: 0xDDE2EA)
+    static let subtle = Color(hex: 0x667085)
+    static let border = Color(hex: 0xD9DDE4) 
 }
 
 struct Tint {
