@@ -18,6 +18,7 @@
 		6493D1497CB148D77A489501 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA91CC8380974220F8463130 /* ProfileView.swift */; };
 		66CF15B2AE45AE44460114EC /* RegisterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7496320DD17E3BD3BA7A83B2 /* RegisterView.swift */; };
 		6AA95F1F080D03D8F5B60F96 /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDB0912E6FB8BD424BC9D824 /* Typography.swift */; };
+		6D589FF2317AA1CA0776FCD5 /* ParkedCarStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A24D379211F813958AEFFAA7 /* ParkedCarStore.swift */; };
 		6F4A65CE42B3184F339A7B2B /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3685140C57C0209BD802F06 /* RootView.swift */; };
 		784D1D84AB77BD4CAF898A77 /* CampusFullView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 444CD6116C0729F6DD7DCEAC /* CampusFullView.swift */; };
 		7DFE5C6C1F82A4348CD34D36 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F16026EB0059B8961CF187A4 /* HomeView.swift */; };
@@ -28,6 +29,7 @@
 		A84B621964648F955BA4E5DC /* FindCarComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95330879F0704F372978A43E /* FindCarComponents.swift */; };
 		B655AE035CB4C865BC784FA2 /* FindCarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3618048DCA5510CC39BDFB12 /* FindCarView.swift */; };
 		B78C783ECFD2DC6B6475D57E /* ParkingMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8EA5DE185C190EBBB9B7543 /* ParkingMapView.swift */; };
+		C6EE0CE0BC4592FAD91C61DF /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5931C53022DF94FA3110F8F5 /* LocationService.swift */; };
 		C837EDD89E0EA23CA8CB3721 /* SpotCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = B13CBF3E6156A1E37ECCA80F /* SpotCell.swift */; };
 		D062A1173556C04B543D6646 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D3C7634F855EC296CD1F80 /* LoginView.swift */; };
 		D1B76E82717655BCCDFB0BAC /* FindSpotComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34D2DFAB7381760043AA924F /* FindSpotComponents.swift */; };
@@ -48,6 +50,7 @@
 		3618048DCA5510CC39BDFB12 /* FindCarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindCarView.swift; sourceTree = "<group>"; };
 		444CD6116C0729F6DD7DCEAC /* CampusFullView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CampusFullView.swift; sourceTree = "<group>"; };
 		559D84270D8F42093A6C88F7 /* ParkingData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkingData.swift; sourceTree = "<group>"; };
+		5931C53022DF94FA3110F8F5 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
 		611A4A43675686E0660C91E8 /* SmartParking.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = SmartParking.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7496320DD17E3BD3BA7A83B2 /* RegisterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterView.swift; sourceTree = "<group>"; };
 		7842261127B8C973F3014152 /* ReserveSpotView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReserveSpotView.swift; sourceTree = "<group>"; };
@@ -57,6 +60,7 @@
 		92F8616FCC45CD2E2248B1E8 /* LevelCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LevelCard.swift; sourceTree = "<group>"; };
 		95330879F0704F372978A43E /* FindCarComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindCarComponents.swift; sourceTree = "<group>"; };
 		9A4E252E8356EE9553E276D4 /* Palette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Palette.swift; sourceTree = "<group>"; };
+		A24D379211F813958AEFFAA7 /* ParkedCarStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkedCarStore.swift; sourceTree = "<group>"; };
 		A4B60FF382295B9AAB13C2F0 /* FindSpotModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindSpotModels.swift; sourceTree = "<group>"; };
 		B13CBF3E6156A1E37ECCA80F /* SpotCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotCell.swift; sourceTree = "<group>"; };
 		B8EA5DE185C190EBBB9B7543 /* ParkingMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkingMapView.swift; sourceTree = "<group>"; };
@@ -112,6 +116,8 @@
 			children = (
 				CE10FBB9AA075CE9397D9BDD /* APIClient.swift */,
 				919709B4035C0C70D24CADD6 /* AuthService.swift */,
+				5931C53022DF94FA3110F8F5 /* LocationService.swift */,
+				A24D379211F813958AEFFAA7 /* ParkedCarStore.swift */,
 				88535BA91C5335FBEAFBE178 /* SessionStore.swift */,
 			);
 			path = Services;
@@ -259,8 +265,10 @@
 				1A3B02E972F8ABAEC39B5C33 /* ForecastCard.swift in Sources */,
 				7DFE5C6C1F82A4348CD34D36 /* HomeView.swift in Sources */,
 				8657CD8FB5B66DB789B38B58 /* LevelCard.swift in Sources */,
+				C6EE0CE0BC4592FAD91C61DF /* LocationService.swift in Sources */,
 				D062A1173556C04B543D6646 /* LoginView.swift in Sources */,
 				543AE446B4617058C88C1939 /* Palette.swift in Sources */,
+				6D589FF2317AA1CA0776FCD5 /* ParkedCarStore.swift in Sources */,
 				918FC7D2BDC50FBD5ED1D6F4 /* ParkingData.swift in Sources */,
 				B78C783ECFD2DC6B6475D57E /* ParkingMapView.swift in Sources */,
 				41FDA3BC121946D111AE6057 /* ParkingModels.swift in Sources */,

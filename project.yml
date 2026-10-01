@@ -14,6 +14,7 @@ targets:
       properties:
         UILaunchScreen: {}
         APIBaseURL: $(API_BASE_URL)
+        NSLocationWhenInUseUsageDescription: Parkwise uses your location to remember where you parked and guide you back to your car.
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         UISupportedInterfaceOrientations:
