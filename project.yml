@@ -13,11 +13,15 @@ targets:
       path: SmartParking/Info.plist
       properties:
         UILaunchScreen: {}
+        APIBaseURL: $(API_BASE_URL)
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.andresmorales.SmartParking
+        API_BASE_URL: http://localhost:3000
         SWIFT_VERSION: 5.0
         TARGETED_DEVICE_FAMILY: "1"
         CODE_SIGN_STYLE: Automatic
