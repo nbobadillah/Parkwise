@@ -20,6 +20,7 @@
 		6AA95F1F080D03D8F5B60F96 /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDB0912E6FB8BD424BC9D824 /* Typography.swift */; };
 		6D589FF2317AA1CA0776FCD5 /* ParkedCarStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A24D379211F813958AEFFAA7 /* ParkedCarStore.swift */; };
 		6F4A65CE42B3184F339A7B2B /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3685140C57C0209BD802F06 /* RootView.swift */; };
+		7657682BB63212ED1A3C8B22 /* TelemetryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0B3346456851875087EEE0A /* TelemetryService.swift */; };
 		784D1D84AB77BD4CAF898A77 /* CampusFullView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 444CD6116C0729F6DD7DCEAC /* CampusFullView.swift */; };
 		7DFE5C6C1F82A4348CD34D36 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F16026EB0059B8961CF187A4 /* HomeView.swift */; };
 		8657CD8FB5B66DB789B38B58 /* LevelCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92F8616FCC45CD2E2248B1E8 /* LevelCard.swift */; };
@@ -74,6 +75,7 @@
 		E4E992344706AFAE7CC607AE /* ParkingModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkingModels.swift; sourceTree = "<group>"; };
 		E56709BD7C58A9634AB64F09 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		EBA60E9FD350426E26506664 /* AppUser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUser.swift; sourceTree = "<group>"; };
+		F0B3346456851875087EEE0A /* TelemetryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryService.swift; sourceTree = "<group>"; };
 		F16026EB0059B8961CF187A4 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		F70BB685EEB3B6DA34468D8E /* ForecastCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForecastCard.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -119,6 +121,7 @@
 				5931C53022DF94FA3110F8F5 /* LocationService.swift */,
 				A24D379211F813958AEFFAA7 /* ParkedCarStore.swift */,
 				88535BA91C5335FBEAFBE178 /* SessionStore.swift */,
+				F0B3346456851875087EEE0A /* TelemetryService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -280,6 +283,7 @@
 				07D51D5F9677FA2F679B03C1 /* SessionStore.swift in Sources */,
 				4903422A09A1B78A77CEDED2 /* SmartParkingApp.swift in Sources */,
 				C837EDD89E0EA23CA8CB3721 /* SpotCell.swift in Sources */,
+				7657682BB63212ED1A3C8B22 /* TelemetryService.swift in Sources */,
 				6AA95F1F080D03D8F5B60F96 /* Typography.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -20,6 +20,14 @@ struct ParkingMapView: View {
                         onClose: { selectedSpotID = nil }
                     )
                     .transition(.move(edge: .bottom))
+                    .task(id: spot.id) {
+                        TelemetryService.shared.trackWalkingTimeViewed(
+                            spotCode: spot.id,
+                            levelCode: levelCode,
+                            minutes: spot.walkMinutes,
+                            source: "map"
+                        )
+                    }
                 }
             }
         }
