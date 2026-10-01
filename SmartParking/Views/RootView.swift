@@ -78,11 +78,7 @@ struct RootView: View {
         case .reserve:
             ReserveSpotView()
         case .profile:
-            PlaceholderView(
-                title: "Profile",
-                message: "Vehicles, payment methods and notification settings.",
-                icon: "person"
-            )
+            ProfileView()
         }
     }
 }
