@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct LevelCard: View {
-    let level: ParkingLevel
+    let level: LevelSummary
     let action: () -> Void
 
     var body: some View {

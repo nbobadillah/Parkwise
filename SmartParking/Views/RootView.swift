@@ -11,10 +11,18 @@ enum MapRoute {
 }
 
 struct RootView: View {
+    let parkingService: ParkingServicing
+
+    @StateObject private var homeViewModel: HomeViewModel
     @State private var tab: AppTab = .home
-    @State private var levelCode = ParkingData.levels[0].code
+    @State private var levelCode = "P1"
     @State private var homeRoute: HomeRoute = .dashboard
     @State private var mapRoute: MapRoute = .floor
+
+    init(parkingService: ParkingServicing) {
+        self.parkingService = parkingService
+        _homeViewModel = StateObject(wrappedValue: HomeViewModel(service: parkingService))
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -22,6 +30,7 @@ struct RootView: View {
             AppTabBar(selection: tabSelection)
         }
         .background(Palette.screen)
+        .task(id: tab) { await homeViewModel.loadLevels() }
     }
 
     // Al tocar cualquier pestaña se vuelve a la pantalla principal de cada sección
@@ -40,13 +49,13 @@ struct RootView: View {
     private var content: some View {
         switch tab {
         case .home:
-            if ParkingData.levels.allSatisfy({ $0.free == 0 }) {
+            if homeViewModel.campusFull {
                 CampusFullView()
             } else {
                 switch homeRoute {
                 case .dashboard:
                     HomeView(
-                        levels: ParkingData.levels,
+                        viewModel: homeViewModel,
                         onOpenLevel: { level in
                             levelCode = level.code
                             mapRoute = .floor
@@ -71,7 +80,7 @@ struct RootView: View {
         case .map:
             switch mapRoute {
             case .floor:
-                ParkingMapView(levelCode: $levelCode)
+                ParkingMapView(levelCode: $levelCode, levels: homeViewModel.levels, service: parkingService)
             case .findCar:
                 FindCarView()
             }

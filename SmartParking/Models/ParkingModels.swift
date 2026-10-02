@@ -57,46 +57,42 @@ enum SpotState {
     case you
 }
 
-struct ParkingSpot: Identifiable {
+struct ParkingSpot: Identifiable, Equatable {
     let id: String
+    let code: String
     var state: SpotState
     let walkMinutes: Int
+
+    init(spot: Spot) {
+        id = spot.id
+        code = spot.code
+        state = spot.state
+        walkMinutes = spot.walkMinutes
+    }
 }
 
-struct ParkingRow: Identifiable {
+struct ParkingRow: Identifiable, Equatable {
     let index: Int
     var spots: [ParkingSpot]
 
     var id: Int { index }
 }
 
-struct ParkingZone: Identifiable {
+struct ParkingZone: Identifiable, Equatable {
+    static let spotsPerRow = 6
+
     let id: String
     let name: String
     var rows: [ParkingRow]
-}
 
-struct ParkingLevel: Identifiable {
-    let code: String
-    let area: String
-    let free: Int
-    let reserved: Int
-    let total: Int
-    let recommendedSpot: String?
-    let zones: [ParkingZone]
-
-    var id: String { code }
-
-    var listTitle: String { "Level \(code) · \(area)" }
-
-    var shortTitle: String { "\(code) · \(area)" }
-
-    var freeTitle: String { free == 0 ? "No spots" : "\(free) free" }
-
-    var occupancy: Double { Double(total - free) / Double(total) }
-
-    var status: LevelStatus {
-        if free == 0 { return .full }
-        return Double(free) / Double(total) < 0.1 ? .limited : .available
+    static func zones(from spots: [Spot]) -> [ParkingZone] {
+        let grouped = Dictionary(grouping: spots, by: \.zone)
+        return grouped.keys.sorted().map { zone in
+            let cells = grouped[zone, default: []].map(ParkingSpot.init(spot:))
+            let rows = stride(from: 0, to: cells.count, by: spotsPerRow).enumerated().map { offset, start in
+                ParkingRow(index: offset + 1, spots: Array(cells[start..<min(start + spotsPerRow, cells.count)]))
+            }
+            return ParkingZone(id: zone, name: "Zone \(zone)", rows: rows)
+        }
     }
 }
