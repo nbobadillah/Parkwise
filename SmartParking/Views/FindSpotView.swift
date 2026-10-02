@@ -2,13 +2,20 @@ import SwiftUI
 
 struct FindSpotView: View {
     let levels: [LevelSummary]
+    let destinationID: String?
     let onReserve: (SpotListing) -> Void
 
     @StateObject private var viewModel: FindSpotViewModel
     @State private var query = ""
 
-    init(levels: [LevelSummary], service: ParkingServicing, onReserve: @escaping (SpotListing) -> Void) {
+    init(
+        levels: [LevelSummary],
+        destinationID: String?,
+        service: ParkingServicing,
+        onReserve: @escaping (SpotListing) -> Void
+    ) {
         self.levels = levels
+        self.destinationID = destinationID
         self.onReserve = onReserve
         _viewModel = StateObject(wrappedValue: FindSpotViewModel(service: service))
     }
@@ -44,8 +51,8 @@ struct FindSpotView: View {
             }
         }
         .background(Palette.screen)
-        .task(id: levels.map(\.code).joined(separator: ",") + viewModel.filter.rawValue) {
-            await viewModel.load(levels: levels)
+        .task(id: levels.map(\.code).joined(separator: ",") + (destinationID ?? "") + viewModel.filter.rawValue) {
+            await viewModel.load(levels: levels, destinationID: destinationID)
         }
     }
 

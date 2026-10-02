@@ -13,7 +13,7 @@ final class FindSpotViewModel: ObservableObject {
         self.service = service
     }
 
-    func load(levels: [LevelSummary]) async {
+    func load(levels: [LevelSummary], destinationID: String?) async {
         isLoading = true
         errorMessage = nil
         spots = []
@@ -24,7 +24,7 @@ final class FindSpotViewModel: ObservableObject {
             for level in levels {
                 let result = try await service.spots(
                     level: level.code,
-                    destination: nil,
+                    destination: destinationID,
                     filters: filter.requestFilters
                 )
                 fetchedSpots.append(contentsOf: result.value)

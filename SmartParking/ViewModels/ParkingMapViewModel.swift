@@ -17,8 +17,9 @@ final class ParkingMapViewModel: ObservableObject {
     private let service: ParkingServicing
     private let telemetry: TelemetryService
 
-    init(service: ParkingServicing, telemetry: TelemetryService? = nil) {
+    init(service: ParkingServicing, destination: String? = nil, telemetry: TelemetryService? = nil) {
         self.service = service
+        self.destination = destination
         self.telemetry = telemetry ?? .shared
     }
 

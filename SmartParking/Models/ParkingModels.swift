@@ -1,30 +1,5 @@
 import SwiftUI
 
-enum OccupancyBand {
-    case low
-    case medium
-    case high
-
-    var tint: Tint {
-        switch self {
-        case .low:
-            return Tint(soft: Palette.greenSoft, strong: Palette.greenInk)
-        case .medium:
-            return Tint(soft: Palette.amberSoft, strong: Color(hex: 0xE8890C))
-        case .high:
-            return Tint(soft: Palette.redSoft, strong: Color(hex: 0xE04E2E))
-        }
-    }
-}
-
-struct ForecastSlot: Identifiable {
-    let id = UUID()
-    let hour: String
-    let load: Double
-    let band: OccupancyBand
-    let isCurrent: Bool
-}
-
 enum LevelStatus {
     case available
     case limited

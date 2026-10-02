@@ -73,7 +73,11 @@ struct RootView: View {
                         }
                     )
                 case .findSpot:
-                    FindSpotView(levels: homeViewModel.levels, service: parkingService) { spot in
+                    FindSpotView(
+                        levels: homeViewModel.levels,
+                        destinationID: homeViewModel.destinationID,
+                        service: parkingService
+                    ) { spot in
                         selectedSpot = spot
                         tab = .reserve
                     }
@@ -85,6 +89,7 @@ struct RootView: View {
                 ParkingMapView(
                     levelCode: $levelCode,
                     levels: homeViewModel.levels,
+                    destinationID: homeViewModel.destinationID,
                     service: parkingService,
                     onReserve: { spot in
                         selectedSpot = SpotListing(spot: spot)
