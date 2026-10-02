@@ -30,7 +30,7 @@ struct ParkingMapView: View {
                 if let spot = viewModel.selectedSpot {
                     SelectedSpotSheet(
                         spot: spot,
-                        isReserved: viewModel.reservedSpotID == spot.id,
+                        isReserved: spot.state == .you,
                         onReserve: { onReserve(spot) },
                         onClose: { viewModel.selectedSpotID = nil }
                     )
