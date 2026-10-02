@@ -1,0 +1,95 @@
+import Foundation
+
+struct ReservedSpot: Equatable {
+    let id: String
+    let code: String
+    let levelCode: String
+
+    init(reservation: Reservation) {
+        id = reservation.spotId
+        code = reservation.spotCode
+        levelCode = reservation.levelCode
+    }
+}
+
+enum ReservationViewModelError: Equatable {
+    case spotUnavailable
+    case activeReservationExists
+    case requestFailed(String)
+
+    var message: String {
+        switch self {
+        case .spotUnavailable:
+            return "Parking spot is not available."
+        case .activeReservationExists:
+            return "An active reservation already exists."
+        case .requestFailed(let message):
+            return message
+        }
+    }
+}
+
+@MainActor
+final class ReservationViewModel: ObservableObject {
+    @Published private(set) var activeReservation: Reservation?
+    @Published private(set) var activeSpot: ReservedSpot?
+    @Published private(set) var remainingTime: TimeInterval?
+    @Published private(set) var error: ReservationViewModelError?
+
+    private let service: ReservationServicing
+    private var countdownTask: Task<Void, Never>?
+
+    init(service: ReservationServicing) {
+        self.service = service
+        Task { await loadActive() }
+    }
+
+    func loadActive() async {
+        error = nil
+        do {
+            setActiveReservation(try await service.active())
+        } catch {
+            self.error = .requestFailed(error.localizedDescription)
+        }
+    }
+
+    func create(spotId: String) async {
+        error = nil
+        do {
+            setActiveReservation(try await service.create(spotId: spotId))
+        } catch let serviceError as ReservationServiceError {
+            switch serviceError {
+            case .spotUnavailable:
+                error = .spotUnavailable
+            case .activeReservationExists:
+                error = .activeReservationExists
+            case .conflict(let message):
+                error = .requestFailed(message)
+            }
+        } catch {
+            self.error = .requestFailed(error.localizedDescription)
+        }
+    }
+
+    private func setActiveReservation(_ reservation: Reservation?) {
+        activeReservation = reservation
+        activeSpot = reservation.map(ReservedSpot.init(reservation:))
+        countdownTask?.cancel()
+
+        guard let reservation, reservation.status == .active else {
+            remainingTime = nil
+            return
+        }
+
+        let expiresAt = reservation.expiresAt
+        countdownTask = Task { [weak self] in
+            while !Task.isCancelled {
+                guard let self else { return }
+                let timeRemaining = max(0, expiresAt.timeIntervalSinceNow)
+                self.remainingTime = timeRemaining
+                guard timeRemaining > 0 else { return }
+                try? await Task.sleep(for: .seconds(1))
+            }
+        }
+    }
+}
