@@ -1,8 +1,27 @@
+import CoreLocation
 import SwiftUI
 
 struct FindCarView: View {
     @ObservedObject var viewModel: ReservationViewModel
+    @ObservedObject var locationService: LocationService
+    let destinationID: String?
+    @StateObject private var parkingViewModel: ParkingMapViewModel
     @State private var mode: RouteMode = .direct
+    @State private var isLoadingSpots = false
+
+    init(
+        viewModel: ReservationViewModel,
+        parkingService: ParkingServicing,
+        locationService: LocationService,
+        destinationID: String?
+    ) {
+        self.viewModel = viewModel
+        self.locationService = locationService
+        self.destinationID = destinationID
+        _parkingViewModel = StateObject(
+            wrappedValue: ParkingMapViewModel(service: parkingService, destination: destinationID)
+        )
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -16,18 +35,30 @@ struct FindCarView: View {
                         if let errorMessage = viewModel.vehicleErrorMessage {
                             AuthBanner(message: errorMessage, isError: true)
                         }
-                        summary(vehicle)
+                        summary(
+                            spotCode: vehicle.spotCode,
+                            levelTitle: "\(vehicle.levelCode) · Zone \(vehicle.zone)",
+                            parkedCar: matchingParkedCar(for: vehicle)
+                        )
                         floorCard(vehicle)
                         modePicker
-                        steps
+                        steps(levelCode: vehicle.levelCode, zone: vehicle.zone, spotCode: vehicle.spotCode)
                     } else if let parkedCar = viewModel.parkedCar {
                         if let errorMessage = viewModel.vehicleErrorMessage {
                             AuthBanner(message: errorMessage, isError: true)
                         }
-                        summary(parkedCar)
+                        summary(
+                            spotCode: parkedCar.spotCode ?? "—",
+                            levelTitle: localLevelTitle(for: parkedCar),
+                            parkedCar: parkedCar
+                        )
                         floorCard(parkedCar)
                         modePicker
-                        steps
+                        steps(
+                            levelCode: parkedCar.levelCode ?? "",
+                            zone: localSpot(for: parkedCar)?.zone,
+                            spotCode: parkedCar.spotCode ?? "—"
+                        )
                     } else if let errorMessage = viewModel.vehicleErrorMessage {
                         AuthBanner(message: errorMessage, isError: true)
                     } else {
@@ -45,6 +76,13 @@ struct FindCarView: View {
         }
         .background(Palette.screen)
         .task { await viewModel.loadVehicle() }
+        .task(id: (vehicleLevelCode ?? "") + (destinationID ?? "")) {
+            guard let vehicleLevelCode else { return }
+            parkingViewModel.destination = destinationID
+            isLoadingSpots = true
+            defer { isLoadingSpots = false }
+            await parkingViewModel.refresh(levelCode: vehicleLevelCode)
+        }
     }
 
     private var header: some View {
@@ -68,19 +106,23 @@ struct FindCarView: View {
         }
     }
 
-    private func summary(_ vehicle: ParkedVehicle) -> some View {
+    private var vehicleLevelCode: String? {
+        viewModel.vehicle?.levelCode ?? viewModel.parkedCar?.levelCode
+    }
+
+    private func summary(spotCode: String, levelTitle: String, parkedCar: ParkedCar?) -> some View {
         HStack(spacing: 12) {
             SummaryTile(
                 label: "Spot",
-                value: vehicle.spotCode,
-                caption: "\(vehicle.levelCode) · Zone \(vehicle.zone)",
+                value: spotCode,
+                caption: levelTitle,
                 valueColor: Palette.accent,
                 monospaced: true
             )
             SummaryTile(
                 label: "Walk",
-                value: "—",
-                caption: "Distance unavailable",
+                value: distanceText(to: parkedCar),
+                caption: walkingEstimateText(to: parkedCar),
                 valueColor: Palette.ink
             )
         }
@@ -96,28 +138,15 @@ struct FindCarView: View {
         return "Vehicle location"
     }
 
-    private func summary(_ parkedCar: ParkedCar) -> some View {
-        HStack(spacing: 12) {
-            SummaryTile(
-                label: "Spot",
-                value: parkedCar.spotCode ?? "—",
-                caption: parkedCar.levelCode ?? "Parking level unavailable",
-                valueColor: Palette.accent,
-                monospaced: true
-            )
-            SummaryTile(
-                label: "Walk",
-                value: "—",
-                caption: "Distance unavailable",
-                valueColor: Palette.ink
-            )
-        }
-    }
-
     private func floorCard(_ vehicle: ParkedVehicle) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             CaptionLabel(text: "\(vehicle.levelCode) · Zone \(vehicle.zone) — Floor view")
-            FloorMapUnavailable(parkedCar: matchingParkedCar(for: vehicle))
+            FindCarFloorMap(
+                zones: parkingViewModel.zones,
+                selectedSpotID: vehicle.spotId,
+                errorMessage: parkingViewModel.errorMessage,
+                isLoading: isLoadingSpots
+            )
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -133,8 +162,13 @@ struct FindCarView: View {
 
     private func floorCard(_ parkedCar: ParkedCar) -> some View {
         VStack(alignment: .leading, spacing: 14) {
-            CaptionLabel(text: "\(parkedCar.levelCode ?? "Parking level unavailable") — Floor view")
-            FloorMapUnavailable(parkedCar: parkedCar)
+            CaptionLabel(text: "\(localLevelTitle(for: parkedCar)) — Floor view")
+            FindCarFloorMap(
+                zones: parkingViewModel.zones,
+                selectedSpotID: localSpot(for: parkedCar)?.id,
+                errorMessage: parkingViewModel.errorMessage,
+                isLoading: isLoadingSpots
+            )
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -152,7 +186,49 @@ struct FindCarView: View {
         }
     }
 
-    private var steps: some View {
-        RouteStepRow(icon: "point.topleft.down.to.point.bottomright.curvepath", text: "Route guidance is not available.")
+    private func steps(levelCode: String, zone: String?, spotCode: String) -> some View {
+        VStack(spacing: 8) {
+            RouteStepRow(icon: "square.3.layers.3d", text: "Level \(levelCode)")
+            if let zone {
+                RouteStepRow(icon: "mappin.and.ellipse", text: "Zone \(zone) · Spot \(spotCode)")
+            } else {
+                RouteStepRow(icon: "mappin.and.ellipse", text: "Spot \(spotCode)")
+            }
+            RouteStepRow(icon: "point.topleft.down.to.point.bottomright.curvepath", text: "Turn-by-turn directions unavailable.")
+        }
+    }
+
+    private func localLevelTitle(for parkedCar: ParkedCar) -> String {
+        let level = parkedCar.levelCode ?? "Parking level unavailable"
+        guard let zone = localSpot(for: parkedCar)?.zone else { return level }
+        return "\(level) · Zone \(zone)"
+    }
+
+    private func localSpot(for parkedCar: ParkedCar?) -> ParkingSpot? {
+        guard let parkedCar, let levelCode = parkedCar.levelCode, let spotCode = parkedCar.spotCode else { return nil }
+        return parkingViewModel.zones
+            .lazy
+            .flatMap(\.rows)
+            .flatMap(\.spots)
+            .first { $0.levelCode == levelCode && $0.code == spotCode }
+    }
+
+    private func distanceText(to parkedCar: ParkedCar?) -> String {
+        guard let distance = straightLineDistance(to: parkedCar) else { return "—" }
+        return LocationService.formatted(distance)
+    }
+
+    private func walkingEstimateText(to parkedCar: ParkedCar?) -> String {
+        guard let distance = straightLineDistance(to: parkedCar) else { return "Distance unavailable" }
+        let minutes = LocationService.walkingMinutes(for: distance)
+        return "~\(minutes) min · straight-line estimate"
+    }
+
+    private func straightLineDistance(to parkedCar: ParkedCar?) -> CLLocationDistance? {
+        guard let parkedCar, let currentLocation = locationService.currentLocation else { return nil }
+        return currentLocation.distance(from: CLLocation(
+            latitude: parkedCar.latitude,
+            longitude: parkedCar.longitude
+        ))
     }
 }

@@ -160,7 +160,12 @@ struct RootView: View {
                     }
                 )
             case .findCar:
-                FindCarView(viewModel: reservationViewModel)
+                FindCarView(
+                    viewModel: reservationViewModel,
+                    parkingService: parkingService,
+                    locationService: locationService,
+                    destinationID: homeViewModel.destinationID
+                )
             }
         case .reserve:
             ReserveSpotView(selectedSpot: selectedSpot, viewModel: reservationViewModel)

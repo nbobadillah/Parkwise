@@ -34,30 +34,55 @@ struct SummaryTile: View {
     }
 }
 
-struct FloorMapUnavailable: View {
-    let parkedCar: ParkedCar?
+struct FindCarFloorMap: View {
+    let zones: [ParkingZone]
+    let selectedSpotID: String?
+    let errorMessage: String?
+    let isLoading: Bool
 
     var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(Palette.neutral)
-            VStack(spacing: 8) {
-                Text(parkedCar == nil ? "Floor map unavailable" : "Saved GPS position")
+        Group {
+            if let errorMessage {
+                AuthBanner(message: errorMessage, isError: true)
+            } else if zones.isEmpty && isLoading {
+                ProgressView()
+                    .frame(maxWidth: .infinity, minHeight: 180)
+            } else if zones.isEmpty {
+                Text("Parking layout unavailable")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(Palette.muted)
-                if let parkedCar {
-                    Text(String(
-                        format: "%.5f, %.5f",
-                        locale: Locale(identifier: "en_US_POSIX"),
-                        parkedCar.latitude,
-                        parkedCar.longitude
-                    ))
-                    .font(.system(size: 12, weight: .medium, design: .monospaced))
-                    .foregroundStyle(Palette.ink)
+                    .frame(maxWidth: .infinity, minHeight: 180)
+            } else {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        EntranceBar()
+                        ForEach(zones) { zone in
+                            VStack(alignment: .leading, spacing: 12) {
+                                ZoneHeader(name: zone.name)
+                                LaneDivider()
+                                ForEach(zone.rows) { row in
+                                    HStack(spacing: 9) {
+                                        Text("\(row.index)")
+                                            .font(.system(size: 12, weight: .medium))
+                                            .foregroundStyle(Palette.muted)
+                                            .frame(width: 12, alignment: .leading)
+                                        ForEach(row.spots) { spot in
+                                            SpotCell(
+                                                spot: spot,
+                                                isSelected: spot.id == selectedSpotID,
+                                                action: {}
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 4)
                 }
+                .frame(height: 260)
             }
         }
-        .frame(height: 260)
     }
 }
 
