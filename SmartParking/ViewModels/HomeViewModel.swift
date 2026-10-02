@@ -13,6 +13,9 @@ final class HomeViewModel: ObservableObject {
     @Published private(set) var forecastPoints: [PredictionPoint] = []
     @Published private(set) var forecastLevelCode: String?
     @Published private(set) var isLoadingForecast = false
+    @Published private(set) var nearbyLots: [NearbyLot] = []
+    @Published private(set) var isLoadingNearbyLots = false
+    @Published private(set) var nearbyLotsErrorMessage: String?
     @Published private(set) var errorMessage: String?
     @Published var arrivalAt = Date().addingTimeInterval(HomeViewModel.defaultArrivalOffset)
     @Published private(set) var selectedBuildingID: String?
@@ -93,6 +96,18 @@ final class HomeViewModel: ObservableObject {
         } catch {
             forecastPoints = []
             forecastLevelCode = levelCode
+        }
+    }
+
+    func loadNearbyLots() async {
+        isLoadingNearbyLots = true
+        nearbyLotsErrorMessage = nil
+        defer { isLoadingNearbyLots = false }
+
+        do {
+            nearbyLots = try await service.nearbyLots()
+        } catch {
+            nearbyLotsErrorMessage = error.localizedDescription
         }
     }
 }

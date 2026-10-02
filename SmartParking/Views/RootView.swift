@@ -55,7 +55,7 @@ struct RootView: View {
         switch tab {
         case .home:
             if homeViewModel.campusFull {
-                CampusFullView()
+                CampusFullView(viewModel: homeViewModel)
             } else {
                 switch homeRoute {
                 case .dashboard:
