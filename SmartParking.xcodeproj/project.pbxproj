@@ -22,6 +22,7 @@
 		66CF15B2AE45AE44460114EC /* RegisterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7496320DD17E3BD3BA7A83B2 /* RegisterView.swift */; };
 		6AA95F1F080D03D8F5B60F96 /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDB0912E6FB8BD424BC9D824 /* Typography.swift */; };
 		6D589FF2317AA1CA0776FCD5 /* ParkedCarStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A24D379211F813958AEFFAA7 /* ParkedCarStore.swift */; };
+		F81AF2528D286A5EF2387865 /* FindCarModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0A44BA1F985C52E7D39B52 /* FindCarModels.swift */; };
 		6F4A65CE42B3184F339A7B2B /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3685140C57C0209BD802F06 /* RootView.swift */; };
 		7657682BB63212ED1A3C8B22 /* TelemetryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0B3346456851875087EEE0A /* TelemetryService.swift */; };
 		784D1D84AB77BD4CAF898A77 /* CampusFullView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 444CD6116C0729F6DD7DCEAC /* CampusFullView.swift */; };
@@ -73,6 +74,7 @@
 		919709B4035C0C70D24CADD6 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		92F8616FCC45CD2E2248B1E8 /* LevelCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LevelCard.swift; sourceTree = "<group>"; };
 		95330879F0704F372978A43E /* FindCarComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindCarComponents.swift; sourceTree = "<group>"; };
+		DB0A44BA1F985C52E7D39B52 /* FindCarModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindCarModels.swift; sourceTree = "<group>"; };
 		9A4E252E8356EE9553E276D4 /* Palette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Palette.swift; sourceTree = "<group>"; };
 		A24D379211F813958AEFFAA7 /* ParkedCarStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkedCarStore.swift; sourceTree = "<group>"; };
 		A2FEE8F9F2F4BDC28C2BB803 /* HomeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModel.swift; sourceTree = "<group>"; };
@@ -206,6 +208,7 @@
 			isa = PBXGroup;
 			children = (
 				EBA60E9FD350426E26506664 /* AppUser.swift */,
+				DB0A44BA1F985C52E7D39B52 /* FindCarModels.swift */,
 				A4B60FF382295B9AAB13C2F0 /* FindSpotModels.swift */,
 				E1189DAA764AE4FB841E817E /* LevelModels.swift */,
 				559D84270D8F42093A6C88F7 /* ParkingData.swift */,
@@ -290,6 +293,7 @@
 				A6A8D7F3E23EC520973A206A /* AuthViewModel.swift in Sources */,
 				784D1D84AB77BD4CAF898A77 /* CampusFullView.swift in Sources */,
 				A84B621964648F955BA4E5DC /* FindCarComponents.swift in Sources */,
+				F81AF2528D286A5EF2387865 /* FindCarModels.swift in Sources */,
 				B655AE035CB4C865BC784FA2 /* FindCarView.swift in Sources */,
 				D1B76E82717655BCCDFB0BAC /* FindSpotComponents.swift in Sources */,
 				DC77BD830473A939C6711389 /* FindSpotModels.swift in Sources */,

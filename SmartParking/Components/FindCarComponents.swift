@@ -33,3 +33,79 @@ struct SummaryTile: View {
         .cardStyle(radius: 8)
     }
 }
+
+struct FloorMapUnavailable: View {
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(Palette.neutral)
+            Text("Floor map unavailable")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(Palette.muted)
+        }
+        .frame(height: 260)
+    }
+}
+
+struct RouteModeButton: View {
+    let title: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 14, weight: isSelected ? .bold : .semibold))
+                .foregroundStyle(isSelected ? Palette.accent : Palette.ink)
+                .frame(maxWidth: .infinity)
+                .frame(height: 43)
+                .background(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(isSelected ? Palette.accentSoft : Palette.card)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .stroke(isSelected ? Palette.accent : Palette.border, lineWidth: isSelected ? 1.6 : 1.5)
+                )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+struct RouteStepRow: View {
+    let icon: String
+    let text: String
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 13, weight: .light))
+                .foregroundStyle(Palette.subtle)
+                .frame(width: 28, height: 28)
+                .background(
+                    RoundedRectangle(cornerRadius: 5, style: .continuous)
+                        .fill(Palette.neutral)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 5, style: .continuous)
+                        .stroke(Palette.line, lineWidth: 1)
+                )
+
+            Text(text)
+                .font(.system(size: 14))
+                .foregroundStyle(Palette.ink)
+
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 11)
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(Palette.card)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(Palette.line, lineWidth: 1)
+        )
+    }
+}
