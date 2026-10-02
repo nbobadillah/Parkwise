@@ -12,16 +12,21 @@ enum MapRoute {
 
 struct RootView: View {
     let parkingService: ParkingServicing
+    let reservationService: ReservationServicing
 
     @StateObject private var homeViewModel: HomeViewModel
+    @StateObject private var reservationViewModel: ReservationViewModel
     @State private var tab: AppTab = .home
     @State private var levelCode = "P1"
     @State private var homeRoute: HomeRoute = .dashboard
     @State private var mapRoute: MapRoute = .floor
+    @State private var selectedSpot: SpotListing?
 
-    init(parkingService: ParkingServicing) {
+    init(parkingService: ParkingServicing, reservationService: ReservationServicing) {
         self.parkingService = parkingService
+        self.reservationService = reservationService
         _homeViewModel = StateObject(wrappedValue: HomeViewModel(service: parkingService))
+        _reservationViewModel = StateObject(wrappedValue: ReservationViewModel(service: reservationService))
     }
 
     var body: some View {
@@ -68,24 +73,29 @@ struct RootView: View {
                         }
                     )
                 case .findSpot:
-                    FindSpotView(
-                        onReserve: { spot in
-                            levelCode = spot.levelCode
-                            mapRoute = .floor
-                            tab = .map
-                        }
-                    )
+                    FindSpotView(levels: homeViewModel.levels, service: parkingService) { spot in
+                        selectedSpot = spot
+                        tab = .reserve
+                    }
                 }
             }
         case .map:
             switch mapRoute {
             case .floor:
-                ParkingMapView(levelCode: $levelCode, levels: homeViewModel.levels, service: parkingService)
+                ParkingMapView(
+                    levelCode: $levelCode,
+                    levels: homeViewModel.levels,
+                    service: parkingService,
+                    onReserve: { spot in
+                        selectedSpot = SpotListing(spot: spot)
+                        tab = .reserve
+                    }
+                )
             case .findCar:
                 FindCarView()
             }
         case .reserve:
-            ReserveSpotView()
+            ReserveSpotView(selectedSpot: selectedSpot, viewModel: reservationViewModel)
         case .profile:
             ProfileView()
         }

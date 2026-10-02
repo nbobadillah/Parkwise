@@ -60,12 +60,16 @@ enum SpotState {
 struct ParkingSpot: Identifiable, Equatable {
     let id: String
     let code: String
+    let zone: String
+    let levelCode: String
     var state: SpotState
     let walkMinutes: Int
 
     init(spot: Spot) {
         id = spot.id
         code = spot.code
+        zone = spot.zone
+        levelCode = spot.levelCode
         state = spot.state
         walkMinutes = spot.walkMinutes
     }

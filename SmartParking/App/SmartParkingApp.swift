@@ -4,11 +4,13 @@ import SwiftUI
 struct SmartParkingApp: App {
     @StateObject private var authViewModel: AuthViewModel
     private let parkingService: ParkingServicing
+    private let reservationService: ReservationServicing
 
     init() {
         let authService = BackendAuthService()
         TelemetryService.shared.token = { authService.token }
         parkingService = BackendParkingService(token: { authService.token })
+        reservationService = BackendReservationService(token: { authService.token })
         _authViewModel = StateObject(wrappedValue: AuthViewModel(service: authService))
     }
 
@@ -20,7 +22,7 @@ struct SmartParkingApp: App {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .background(Palette.screen)
                 } else if authViewModel.isAuthenticated {
-                    RootView(parkingService: parkingService)
+                    RootView(parkingService: parkingService, reservationService: reservationService)
                 } else {
                     LoginView()
                 }

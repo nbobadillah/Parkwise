@@ -34,6 +34,7 @@ final class ReservationViewModel: ObservableObject {
     @Published private(set) var activeReservation: Reservation?
     @Published private(set) var activeSpot: ReservedSpot?
     @Published private(set) var remainingTime: TimeInterval?
+    @Published private(set) var history: [Reservation] = []
     @Published private(set) var error: ReservationViewModelError?
 
     private let service: ReservationServicing
@@ -41,7 +42,10 @@ final class ReservationViewModel: ObservableObject {
 
     init(service: ReservationServicing) {
         self.service = service
-        Task { await loadActive() }
+        Task {
+            await loadActive()
+            await loadHistory()
+        }
     }
 
     func loadActive() async {
@@ -56,7 +60,10 @@ final class ReservationViewModel: ObservableObject {
     func create(spotId: String) async {
         error = nil
         do {
-            setActiveReservation(try await service.create(spotId: spotId))
+            let reservation = try await service.create(spotId: spotId)
+            setActiveReservation(reservation)
+            history.removeAll { $0.id == reservation.id }
+            history.insert(reservation, at: 0)
         } catch let serviceError as ReservationServiceError {
             switch serviceError {
             case .spotUnavailable:
@@ -66,6 +73,14 @@ final class ReservationViewModel: ObservableObject {
             case .conflict(let message):
                 error = .requestFailed(message)
             }
+        } catch {
+            self.error = .requestFailed(error.localizedDescription)
+        }
+    }
+
+    func loadHistory() async {
+        do {
+            history = try await service.history()
         } catch {
             self.error = .requestFailed(error.localizedDescription)
         }

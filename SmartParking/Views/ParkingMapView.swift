@@ -3,12 +3,19 @@ import SwiftUI
 struct ParkingMapView: View {
     @Binding var levelCode: String
     let levels: [LevelSummary]
+    let onReserve: (ParkingSpot) -> Void
 
     @StateObject private var viewModel: ParkingMapViewModel
 
-    init(levelCode: Binding<String>, levels: [LevelSummary], service: ParkingServicing) {
+    init(
+        levelCode: Binding<String>,
+        levels: [LevelSummary],
+        service: ParkingServicing,
+        onReserve: @escaping (ParkingSpot) -> Void
+    ) {
         _levelCode = levelCode
         self.levels = levels
+        self.onReserve = onReserve
         _viewModel = StateObject(wrappedValue: ParkingMapViewModel(service: service))
     }
 
@@ -21,7 +28,7 @@ struct ParkingMapView: View {
                     SelectedSpotSheet(
                         spot: spot,
                         isReserved: viewModel.reservedSpotID == spot.id,
-                        onReserve: { viewModel.reserve(spot.id) },
+                        onReserve: { onReserve(spot) },
                         onClose: { viewModel.selectedSpotID = nil }
                     )
                     .transition(.move(edge: .bottom))

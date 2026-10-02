@@ -1,6 +1,6 @@
 import Foundation
 
-enum SpotKind {
+enum SpotKind: Equatable {
     case standard
     case vip
     case electric
@@ -16,25 +16,65 @@ enum SpotKind {
     }
 }
 
-struct SpotListing: Identifiable {
-    let id: String
-    let levelCode: String
-    let area: String
-    let walkMinutes: Int
-    let kind: SpotKind
+enum FindSpotFilter: String, CaseIterable, Identifiable {
+    case available = "Available"
+    case vip = "VIP"
+    case electric = "Electric"
+    case accessible = "Accessible"
 
-    var levelTitle: String { "\(levelCode) · \(area)" }
+    var id: String { rawValue }
+
+    var requestFilters: SpotFilters {
+        switch self {
+        case .available:
+            return SpotFilters(available: true)
+        case .vip:
+            return SpotFilters(vip: true)
+        case .electric:
+            return SpotFilters(ev: true)
+        case .accessible:
+            return SpotFilters(accessible: true)
+        }
+    }
 }
 
-enum FindSpotData {
-    static let filters = ["Available", "VIP", "Electric", "Accessible"]
+struct SpotListing: Identifiable, Equatable {
+    let id: String
+    let code: String
+    let levelCode: String
+    let zone: String
+    let walkMinutes: Int
+    let kind: SpotKind
+    let isAvailable: Bool
 
-    static let spots: [SpotListing] = [
-        SpotListing(id: "A103", levelCode: "P1", area: "North", walkMinutes: 1, kind: .standard),
-        SpotListing(id: "A205", levelCode: "P1", area: "North", walkMinutes: 2, kind: .standard),
-        SpotListing(id: "B201", levelCode: "P1", area: "North", walkMinutes: 2, kind: .standard),
-        SpotListing(id: "B108", levelCode: "P1", area: "North", walkMinutes: 3, kind: .electric),
-        SpotListing(id: "C012", levelCode: "P2", area: "Central", walkMinutes: 5, kind: .vip),
-        SpotListing(id: "D304", levelCode: "P2", area: "Central", walkMinutes: 6, kind: .accessible)
-    ]
+    init(spot: Spot) {
+        id = spot.id
+        code = spot.code
+        levelCode = spot.levelCode
+        zone = spot.zone
+        walkMinutes = spot.walkMinutes
+        isAvailable = spot.status == .free
+
+        if spot.isVip {
+            kind = .vip
+        } else if spot.isEv {
+            kind = .electric
+        } else if spot.isAccessible {
+            kind = .accessible
+        } else {
+            kind = .standard
+        }
+    }
+
+    init(spot: ParkingSpot) {
+        id = spot.id
+        code = spot.code
+        levelCode = spot.levelCode
+        zone = spot.zone
+        walkMinutes = spot.walkMinutes
+        isAvailable = spot.state == .free
+        kind = .standard
+    }
+
+    var levelTitle: String { "\(levelCode) · Zone \(zone)" }
 }

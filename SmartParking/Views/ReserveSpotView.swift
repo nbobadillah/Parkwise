@@ -1,12 +1,17 @@
 import SwiftUI
 
 struct ReserveSpotView: View {
+    let selectedSpot: SpotListing?
+    @ObservedObject var viewModel: ReservationViewModel
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 header
                 mainReservationCard
-                infoCard
+                if let error = viewModel.error {
+                    AuthBanner(message: error.message, isError: true)
+                }
                 historySection
             }
             .padding(.horizontal, 18)
@@ -16,12 +21,46 @@ struct ReserveSpotView: View {
         .background(Palette.screen)
     }
 
+    private var displayedSpotCode: String? {
+        selectedSpot?.code ?? viewModel.activeSpot?.code
+    }
+
+    private var displayedSpotTitle: String? {
+        if let selectedSpot {
+            return "\(selectedSpot.levelCode) · Zone \(selectedSpot.zone)"
+        }
+        return viewModel.activeSpot.map { "\($0.levelCode) · Zone \($0.zone)" }
+    }
+
+    private var matchingReservation: Reservation? {
+        guard let spotId = selectedSpot?.id ?? viewModel.activeSpot?.id else { return nil }
+        return viewModel.activeReservation?.spotId == spotId
+            ? viewModel.activeReservation
+            : nil
+    }
+
+    private var remainingTimeText: String {
+        guard let remainingTime = viewModel.remainingTime, matchingReservation?.status == .active else {
+            return "—"
+        }
+        let seconds = Int(remainingTime)
+        return String(format: "%02d:%02d", seconds / 60, seconds % 60)
+    }
+
+    private var reservationButtonTitle: String {
+        switch matchingReservation?.status {
+        case .some(.active): return "Reservation active"
+        case .some(.fulfilled): return "Checked in"
+        default: return "Confirm reservation"
+        }
+    }
+
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Reserve spot")
                 .font(.system(size: 34, weight: .bold))
                 .foregroundStyle(Palette.ink)
-            Text("P1 · North · Zone B")
+            Text(displayedSpotTitle ?? "Select a parking spot")
                 .font(.system(size: 15, weight: .medium))
                 .foregroundStyle(Palette.muted)
         }
@@ -35,10 +74,10 @@ struct ReserveSpotView: View {
                         .font(.system(size: 13, weight: .bold))
                         .tracking(1.0)
                         .foregroundStyle(Palette.accent)
-                    Text("B201")
+                    Text(displayedSpotCode ?? "Select spot")
                         .font(.system(size: 42, weight: .bold))
                         .foregroundStyle(Palette.accent)
-                    Text("Level P1 · North · Row 2")
+                    Text(displayedSpotTitle ?? "")
                         .font(.system(size: 15, weight: .medium))
                         .foregroundStyle(Palette.muted)
                 }
@@ -50,7 +89,7 @@ struct ReserveSpotView: View {
                         Circle()
                             .stroke(Palette.accent, lineWidth: 3)
                             .frame(width: 80, height: 80)
-                        Text("15:00")
+                        Text(remainingTimeText)
                             .font(.system(size: 18, weight: .bold, design: .monospaced))
                             .foregroundStyle(Palette.ink)
                     }
@@ -60,8 +99,11 @@ struct ReserveSpotView: View {
                 }
             }
 
-            Button { } label: {
-                Text("Confirm reservation")
+            Button {
+                guard let selectedSpot else { return }
+                Task { await viewModel.create(spotId: selectedSpot.id) }
+            } label: {
+                Text(reservationButtonTitle)
                     .font(.system(size: 18, weight: .bold))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
@@ -72,6 +114,7 @@ struct ReserveSpotView: View {
                     )
             }
             .buttonStyle(.plain)
+            .disabled(selectedSpot == nil || matchingReservation?.status == .active || matchingReservation?.status == .fulfilled)
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -85,36 +128,6 @@ struct ReserveSpotView: View {
         )
     }
 
-    private var infoCard: some View {
-        HStack(alignment: .top, spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(Palette.amberSoft)
-                    .frame(width: 24, height: 24)
-                Image(systemName: "exclamationmark.circle.fill")
-                    .font(.system(size: 18))
-                    .foregroundStyle(Palette.amberText)
-            }
-
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Best time to reserve")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(Palette.amberText)
-                Text("Based on your commute, reserve at 7:45 AM to arrive during the low-traffic window. Today's lot fills by 8:30 AM.")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(Palette.amberText)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .padding(.vertical, 14)
-        .padding(.horizontal, 16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Palette.amberSoft)
-        )
-    }
-
     private var historySection: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Compliance history")
@@ -122,11 +135,17 @@ struct ReserveSpotView: View {
                 .foregroundStyle(Palette.ink)
 
             VStack(spacing: 0) {
-                HistoryRow(title: "Spot B201", date: "Sep 3, 2026", isGood: true)
-                HistoryRow(title: "Spot A103", date: "Sep 2, 2026", isGood: true)
-                HistoryRow(title: "Spot C012", date: "Aug 30", isGood: false)
-                HistoryRow(title: "Spot A205", date: "Aug 28", isGood: true)
-                HistoryRow(title: "Spot B108", date: "Aug 27", isGood: true)
+                if viewModel.history.isEmpty {
+                    Text("No reservation history")
+                        .font(.system(size: 14))
+                        .foregroundStyle(Palette.muted)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(14)
+                } else {
+                    ForEach(viewModel.history) { reservation in
+                        HistoryRow(reservation: reservation)
+                    }
+                }
             }
             .background(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
@@ -141,32 +160,38 @@ struct ReserveSpotView: View {
 }
 
 private struct HistoryRow: View {
-    let title: String
-    let date: String
-    let isGood: Bool
+    let reservation: Reservation
+
+    private var isGood: Bool {
+        reservation.status == .fulfilled || reservation.status == .released
+    }
+
+    private var isActive: Bool {
+        reservation.status == .active
+    }
 
     var body: some View {
         HStack(alignment: .center, spacing: 10) {
             ZStack {
                 RoundedRectangle(cornerRadius: 5, style: .continuous)
-                    .fill(isGood ? Palette.greenSoft : Palette.redSoft)
+                    .fill(isGood ? Palette.greenSoft : (isActive ? Palette.amberSoft : Palette.redSoft))
                     .frame(width: 18, height: 18)
                     .overlay(
                         RoundedRectangle(cornerRadius: 5, style: .continuous)
-                            .stroke(isGood ? Palette.greenInk.opacity(0.25) : Palette.redInk.opacity(0.25), lineWidth: 1)
+                            .stroke(isGood ? Palette.greenInk.opacity(0.25) : (isActive ? Palette.amberInk.opacity(0.25) : Palette.redInk.opacity(0.25)), lineWidth: 1)
                     )
-                Image(systemName: isGood ? "checkmark" : "xmark")
+                Image(systemName: isGood ? "checkmark" : (isActive ? "clock" : "xmark"))
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(isGood ? Palette.greenInk : Palette.redInk)
+                    .foregroundStyle(isGood ? Palette.greenInk : (isActive ? Palette.amberInk : Palette.redInk))
             }
 
-            Text(title)
+            Text("Spot \(reservation.spotCode) · \(reservation.status.rawValue.capitalized)")
                 .font(.system(size: 16, weight: .medium))
                 .foregroundStyle(Palette.ink)
 
             Spacer()
 
-            Text(date)
+            Text(reservation.createdAt.formatted(date: .abbreviated, time: .omitted))
                 .font(.system(size: 15, weight: .medium, design: .monospaced))
                 .foregroundStyle(Palette.muted)
         }

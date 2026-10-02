@@ -32,6 +32,9 @@
 		918FC7D2BDC50FBD5ED1D6F4 /* ParkingData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 559D84270D8F42093A6C88F7 /* ParkingData.swift */; };
 		A6A8D7F3E23EC520973A206A /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CCD26713F736832E9B8788A /* AuthViewModel.swift */; };
 		A84B621964648F955BA4E5DC /* FindCarComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95330879F0704F372978A43E /* FindCarComponents.swift */; };
+		AA0000000000000000000001 /* ReservationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000001 /* ReservationService.swift */; };
+		AA0000000000000000000002 /* ReservationViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000002 /* ReservationViewModel.swift */; };
+		AA0000000000000000000003 /* FindSpotViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000003 /* FindSpotViewModel.swift */; };
 		B655AE035CB4C865BC784FA2 /* FindCarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3618048DCA5510CC39BDFB12 /* FindCarView.swift */; };
 		B78C783ECFD2DC6B6475D57E /* ParkingMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8EA5DE185C190EBBB9B7543 /* ParkingMapView.swift */; };
 		B82732E4A69E43EF7FEC533F /* SpotModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33A204A90F32019041329614 /* SpotModels.swift */; };
@@ -75,6 +78,9 @@
 		A24D379211F813958AEFFAA7 /* ParkedCarStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkedCarStore.swift; sourceTree = "<group>"; };
 		A2FEE8F9F2F4BDC28C2BB803 /* HomeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModel.swift; sourceTree = "<group>"; };
 		A4B60FF382295B9AAB13C2F0 /* FindSpotModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindSpotModels.swift; sourceTree = "<group>"; };
+		BB0000000000000000000001 /* ReservationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationService.swift; sourceTree = "<group>"; };
+		BB0000000000000000000002 /* ReservationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationViewModel.swift; sourceTree = "<group>"; };
+		BB0000000000000000000003 /* FindSpotViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindSpotViewModel.swift; sourceTree = "<group>"; };
 		AD48138B295B21646737C805 /* ParkingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkingService.swift; sourceTree = "<group>"; };
 		B13CBF3E6156A1E37ECCA80F /* SpotCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotCell.swift; sourceTree = "<group>"; };
 		B8EA5DE185C190EBBB9B7543 /* ParkingMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkingMapView.swift; sourceTree = "<group>"; };
@@ -101,6 +107,8 @@
 			isa = PBXGroup;
 			children = (
 				2CCD26713F736832E9B8788A /* AuthViewModel.swift */,
+				BB0000000000000000000002 /* ReservationViewModel.swift */,
+				BB0000000000000000000003 /* FindSpotViewModel.swift */,
 				A2FEE8F9F2F4BDC28C2BB803 /* HomeViewModel.swift */,
 				630260762228BB1C0EDFBCD5 /* ParkingMapViewModel.swift */,
 			);
@@ -139,6 +147,7 @@
 				5931C53022DF94FA3110F8F5 /* LocationService.swift */,
 				A24D379211F813958AEFFAA7 /* ParkedCarStore.swift */,
 				AD48138B295B21646737C805 /* ParkingService.swift */,
+				BB0000000000000000000001 /* ReservationService.swift */,
 				CEC58F4E3CBAD7CF19E7962D /* ResponseCache.swift */,
 				88535BA91C5335FBEAFBE178 /* SessionStore.swift */,
 				F0B3346456851875087EEE0A /* TelemetryService.swift */,
@@ -301,8 +310,11 @@
 				918FC7D2BDC50FBD5ED1D6F4 /* ParkingData.swift in Sources */,
 				B78C783ECFD2DC6B6475D57E /* ParkingMapView.swift in Sources */,
 				216E46933F1E6E1F2AECAEFD /* ParkingMapViewModel.swift in Sources */,
+				AA0000000000000000000002 /* ReservationViewModel.swift in Sources */,
+				AA0000000000000000000003 /* FindSpotViewModel.swift in Sources */,
 				41FDA3BC121946D111AE6057 /* ParkingModels.swift in Sources */,
 				91636DAFEF03B3FF70266C43 /* ParkingService.swift in Sources */,
+				AA0000000000000000000001 /* ReservationService.swift in Sources */,
 				FC1FB4D7510C072F41B3E2F3 /* Pills.swift in Sources */,
 				6493D1497CB148D77A489501 /* ProfileView.swift in Sources */,
 				C35DC349829F7893E2DD4EE6 /* RecommendationCard.swift in Sources */,
