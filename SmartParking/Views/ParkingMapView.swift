@@ -2,27 +2,32 @@ import SwiftUI
 
 struct ParkingMapView: View {
     @Binding var levelCode: String
+    let levels: [LevelSummary]
 
-    @State private var zones: [ParkingZone] = []
-    @State private var selectedSpotID: String?
-    @State private var reservedSpotID: String?
+    @StateObject private var viewModel: ParkingMapViewModel
+
+    init(levelCode: Binding<String>, levels: [LevelSummary], service: ParkingServicing) {
+        _levelCode = levelCode
+        self.levels = levels
+        _viewModel = StateObject(wrappedValue: ParkingMapViewModel(service: service))
+    }
 
     var body: some View {
         VStack(spacing: 0) {
             header
             ZStack(alignment: .bottom) {
                 grid
-                if let spot = selectedSpot {
+                if let spot = viewModel.selectedSpot {
                     SelectedSpotSheet(
                         spot: spot,
-                        isReserved: reservedSpotID == spot.id,
-                        onReserve: { reserve(spot.id) },
-                        onClose: { selectedSpotID = nil }
+                        isReserved: viewModel.reservedSpotID == spot.id,
+                        onReserve: { viewModel.reserve(spot.id) },
+                        onClose: { viewModel.selectedSpotID = nil }
                     )
                     .transition(.move(edge: .bottom))
                     .task(id: spot.id) {
                         TelemetryService.shared.trackWalkingTimeViewed(
-                            spotCode: spot.id,
+                            spotCode: spot.code,
                             levelCode: levelCode,
                             minutes: spot.walkMinutes,
                             source: "map"
@@ -32,9 +37,8 @@ struct ParkingMapView: View {
             }
         }
         .background(Palette.screen)
-        .animation(.easeOut(duration: 0.22), value: selectedSpotID)
-        .onAppear(perform: loadLevel)
-        .onChange(of: levelCode) { loadLevel() }
+        .animation(.easeOut(duration: 0.22), value: viewModel.selectedSpotID)
+        .task(id: levelCode) { await viewModel.run(levelCode: levelCode) }
     }
 
     private var header: some View {
@@ -42,13 +46,13 @@ struct ParkingMapView: View {
             HStack(alignment: .bottom) {
                 VStack(alignment: .leading, spacing: 2) {
                     SectionLabel(text: "Level")
-                    Text(ParkingData.level(code: levelCode).shortTitle)
+                    Text(levels.first { $0.code == levelCode }?.shortTitle ?? levelCode)
                         .font(.system(size: 25, weight: .bold))
                         .foregroundStyle(Palette.ink)
                 }
                 Spacer()
                 HStack(spacing: 8) {
-                    ForEach(ParkingData.levels) { level in
+                    ForEach(levels) { level in
                         LevelChip(code: level.code, isSelected: level.code == levelCode) {
                             levelCode = level.code
                         }
@@ -78,7 +82,7 @@ struct ParkingMapView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 EntranceBar()
-                ForEach(zones) { zone in
+                ForEach(viewModel.zones) { zone in
                     VStack(alignment: .leading, spacing: 12) {
                         ZoneHeader(name: zone.name)
                         LaneDivider()
@@ -89,8 +93,8 @@ struct ParkingMapView: View {
                                     .foregroundStyle(Palette.muted)
                                     .frame(width: 12, alignment: .leading)
                                 ForEach(row.spots) { spot in
-                                    SpotCell(spot: spot, isSelected: spot.id == selectedSpotID) {
-                                        selectedSpotID = spot.id
+                                    SpotCell(spot: spot, isSelected: spot.id == viewModel.selectedSpotID) {
+                                        viewModel.selectedSpotID = spot.id
                                     }
                                 }
                             }
@@ -100,38 +104,8 @@ struct ParkingMapView: View {
             }
             .padding(.horizontal, 18)
             .padding(.top, 16)
-            .padding(.bottom, selectedSpot == nil ? 24 : 190)
+            .padding(.bottom, viewModel.selectedSpot == nil ? 24 : 190)
         }
-    }
-
-    private var selectedSpot: ParkingSpot? {
-        guard let selectedSpotID else { return nil }
-        for zone in zones {
-            for row in zone.rows {
-                if let match = row.spots.first(where: { $0.id == selectedSpotID }) {
-                    return match
-                }
-            }
-        }
-        return nil
-    }
-
-    private func loadLevel() {
-        let level = ParkingData.level(code: levelCode)
-        zones = level.zones
-        reservedSpotID = nil
-        selectedSpotID = level.recommendedSpot
-    }
-
-    private func reserve(_ id: String) {
-        for zoneIndex in zones.indices {
-            for rowIndex in zones[zoneIndex].rows.indices {
-                for spotIndex in zones[zoneIndex].rows[rowIndex].spots.indices where zones[zoneIndex].rows[rowIndex].spots[spotIndex].id == id {
-                    zones[zoneIndex].rows[rowIndex].spots[spotIndex].state = .you
-                }
-            }
-        }
-        reservedSpotID = id
     }
 }
 
@@ -150,7 +124,7 @@ struct SelectedSpotSheet: View {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
                     SectionLabel(text: "Selected spot")
-                    Text(spot.id)
+                    Text(spot.code)
                         .font(.system(size: 30, weight: .bold, design: .monospaced))
                         .foregroundStyle(Palette.accent)
                 }

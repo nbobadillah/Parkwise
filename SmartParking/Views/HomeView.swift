@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct HomeView: View {
-    let levels: [ParkingLevel]
-    let onOpenLevel: (ParkingLevel) -> Void
+    @ObservedObject var viewModel: HomeViewModel
+    let onOpenLevel: (LevelSummary) -> Void
     let onFindSpot: () -> Void
     let onFindCar: () -> Void
 
@@ -14,6 +14,7 @@ struct HomeView: View {
                 header
                 destinationPicker
                 ForecastCard(slots: ParkingData.forecast)
+                recommendation
                 levelList
                 actions
             }
@@ -22,6 +23,7 @@ struct HomeView: View {
             .padding(.bottom, 26)
         }
         .background(Palette.screen)
+        .task(id: viewModel.arrivalAt) { await viewModel.loadRecommendation() }
     }
 
     private var header: some View {
@@ -59,10 +61,17 @@ struct HomeView: View {
         }
     }
 
+    private var recommendation: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            SectionLabel(text: "Recommended level")
+            RecommendationCard(recommendation: viewModel.recommendation, arrivalAt: $viewModel.arrivalAt)
+        }
+    }
+
     private var levelList: some View {
         VStack(alignment: .leading, spacing: 12) {
             SectionLabel(text: "Parking levels")
-            ForEach(levels) { level in
+            ForEach(viewModel.levels) { level in
                 LevelCard(level: level) {
                     onOpenLevel(level)
                 }

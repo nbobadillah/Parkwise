@@ -23,7 +23,7 @@ struct SpotCell: View {
     private var content: some View {
         Group {
             if isSelected {
-                Text(spot.id)
+                Text(spot.code)
                     .font(.system(size: 12, weight: .bold, design: .monospaced))
                     .foregroundStyle(.white)
             } else if spot.state == .free {

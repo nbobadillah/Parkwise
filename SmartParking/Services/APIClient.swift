@@ -1,5 +1,9 @@
 import Foundation
 
+extension Notification.Name {
+    static let sessionExpired = Notification.Name("sessionExpired")
+}
+
 enum APIError: LocalizedError {
     case network
     case server(status: Int, message: String)
@@ -24,11 +28,13 @@ final class APIClient {
     private let baseURL: URL
     private let session: URLSession
     private let encoder = JSONEncoder()
-    private let decoder = JSONDecoder()
+    private let decoder: JSONDecoder
 
     init(baseURL: URL = APIClient.configuredBaseURL, session: URLSession = .shared) {
         self.baseURL = baseURL
         self.session = session
+        decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .custom(APIClient.decodeDate)
     }
 
     static var configuredBaseURL: URL {
@@ -36,13 +42,24 @@ final class APIClient {
         return value.flatMap(URL.init(string:)) ?? URL(string: "http://localhost:3000")!
     }
 
+    static func iso8601String(from date: Date) -> String {
+        date.formatted(.iso8601)
+    }
+
     func send<Response: Decodable>(
         _ method: String,
         _ path: String,
+        query: [URLQueryItem] = [],
         body: (any Encodable)? = nil,
         token: String? = nil
     ) async throws -> Response {
-        var request = URLRequest(url: baseURL.appending(path: path))
+        var components = URLComponents(url: baseURL.appending(path: path), resolvingAgainstBaseURL: false)
+        if !query.isEmpty {
+            components?.queryItems = query
+        }
+        guard let url = components?.url else { throw APIError.network }
+
+        var request = URLRequest(url: url)
         request.httpMethod = method
         request.timeoutInterval = 10
         request.setValue("application/json", forHTTPHeaderField: "Accept")
@@ -64,6 +81,11 @@ final class APIClient {
 
         guard let http = response as? HTTPURLResponse else { throw APIError.decoding }
         guard (200..<300).contains(http.statusCode) else {
+            if http.statusCode == 401, token != nil {
+                await MainActor.run {
+                    NotificationCenter.default.post(name: .sessionExpired, object: nil)
+                }
+            }
             let message = (try? decoder.decode(ErrorBody.self, from: data))?.error ?? "Request failed."
             throw APIError.server(status: http.statusCode, message: message)
         }
@@ -73,5 +95,17 @@ final class APIClient {
         } catch {
             throw APIError.decoding
         }
+    }
+
+    @Sendable private static func decodeDate(_ decoder: Decoder) throws -> Date {
+        let container = try decoder.singleValueContainer()
+        let value = try container.decode(String.self)
+        if let date = try? Date.ISO8601FormatStyle(includingFractionalSeconds: true).parse(value) {
+            return date
+        }
+        if let date = try? Date.ISO8601FormatStyle().parse(value) {
+            return date
+        }
+        throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid ISO 8601 date: \(value)")
     }
 }
