@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 enum TelemetryValue: Codable, Equatable {
     case string(String)
@@ -45,6 +46,7 @@ final class TelemetryService {
     private let maxPending = 200
     private var isFlushing = false
 
+    var token: () -> String? = { nil }
     private(set) var pending: [TelemetryEvent]
 
     init(client: APIClient = .shared, defaults: UserDefaults = .standard) {
@@ -71,6 +73,25 @@ final class TelemetryService {
         ])
     }
 
+    func trackAppOpened() {
+        track("app_opened", ["platform": .string("ios")])
+    }
+
+    func trackMapLoaded(levelCode: String, durationMs: Int, errorType: String?) {
+        var properties: [String: TelemetryValue] = [
+            "levelCode": .string(levelCode),
+            "durationMs": .int(durationMs),
+            "success": .bool(errorType == nil),
+            "deviceModel": .string(Self.deviceModel),
+            "osVersion": .string(UIDevice.current.systemVersion),
+            "platform": .string("ios")
+        ]
+        if let errorType {
+            properties["errorType"] = .string(errorType)
+        }
+        track("map_loaded", properties)
+    }
+
     func flush() async {
         guard !isFlushing else { return }
         isFlushing = true
@@ -78,15 +99,26 @@ final class TelemetryService {
 
         while let event = pending.first {
             do {
-                let _: Accepted = try await client.send("POST", "/api/v1/telemetry", body: event)
+                let _: Accepted = try await client.send("POST", "/api/v1/telemetry", body: event, token: token())
                 pending.removeFirst()
                 persist()
-            } catch APIError.server(let status, _) where (400..<500).contains(status) {
+            } catch APIError.server(let status, _) where (400..<500).contains(status) && status != 429 {
                 pending.removeFirst()
                 persist()
             } catch {
                 return
             }
+        }
+    }
+
+    private static var deviceModel: String {
+        if let simulated = ProcessInfo.processInfo.environment["SIMULATOR_MODEL_IDENTIFIER"] {
+            return simulated
+        }
+        var info = utsname()
+        uname(&info)
+        return withUnsafeBytes(of: &info.machine) { buffer in
+            String(decoding: buffer.prefix { $0 != 0 }, as: UTF8.self)
         }
     }
 
