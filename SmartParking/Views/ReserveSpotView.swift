@@ -49,9 +49,17 @@ struct ReserveSpotView: View {
 
     private var reservationButtonTitle: String {
         switch matchingReservation?.status {
-        case .some(.active): return "Reservation active"
-        case .some(.fulfilled): return "Checked in"
+        case .some(.active): return "Check in"
+        case .some(.fulfilled): return "Release spot"
+        case .some(.released), .some(.cancelled), .some(.expired): return "Reservation closed"
         default: return "Confirm reservation"
+        }
+    }
+
+    private var isReservationClosed: Bool {
+        switch matchingReservation?.status {
+        case .some(.released), .some(.cancelled), .some(.expired): return true
+        default: return false
         }
     }
 
@@ -100,8 +108,17 @@ struct ReserveSpotView: View {
             }
 
             Button {
-                guard let selectedSpot else { return }
-                Task { await viewModel.create(spotId: selectedSpot.id) }
+                Task {
+                    switch matchingReservation?.status {
+                    case .some(.active):
+                        await viewModel.checkIn()
+                    case .some(.fulfilled):
+                        await viewModel.release()
+                    default:
+                        guard let selectedSpot else { return }
+                        await viewModel.create(spotId: selectedSpot.id)
+                    }
+                }
             } label: {
                 Text(reservationButtonTitle)
                     .font(.system(size: 18, weight: .bold))
@@ -114,7 +131,11 @@ struct ReserveSpotView: View {
                     )
             }
             .buttonStyle(.plain)
-            .disabled(selectedSpot == nil || matchingReservation?.status == .active || matchingReservation?.status == .fulfilled)
+            .disabled(
+                viewModel.isPerformingAction
+                    || isReservationClosed
+                    || (selectedSpot == nil && matchingReservation == nil)
+            )
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)

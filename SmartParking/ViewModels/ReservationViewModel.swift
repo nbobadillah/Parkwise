@@ -35,6 +35,10 @@ final class ReservationViewModel: ObservableObject {
     @Published private(set) var activeSpot: ReservedSpot?
     @Published private(set) var remainingTime: TimeInterval?
     @Published private(set) var history: [Reservation] = []
+    @Published private(set) var vehicle: ParkedVehicle?
+    @Published private(set) var isLoadingVehicle = false
+    @Published private(set) var vehicleErrorMessage: String?
+    @Published private(set) var isPerformingAction = false
     @Published private(set) var error: ReservationViewModelError?
 
     private let service: ReservationServicing
@@ -81,6 +85,56 @@ final class ReservationViewModel: ObservableObject {
     func loadHistory() async {
         do {
             history = try await service.history()
+        } catch {
+            self.error = .requestFailed(error.localizedDescription)
+        }
+    }
+
+    func checkIn() async {
+        guard let reservation = activeReservation, reservation.status == .active else { return }
+        await performReservationAction {
+            try await self.service.checkIn(id: reservation.id)
+        }
+        if activeReservation?.status == .fulfilled {
+            await loadVehicle()
+        }
+    }
+
+    func release() async {
+        guard let reservation = activeReservation,
+              reservation.status == .active || reservation.status == .fulfilled else { return }
+        await performReservationAction {
+            try await self.service.release(id: reservation.id)
+        }
+        if activeReservation?.status == .cancelled || activeReservation?.status == .released {
+            await loadVehicle()
+        }
+    }
+
+    func loadVehicle() async {
+        isLoadingVehicle = true
+        vehicleErrorMessage = nil
+        defer { isLoadingVehicle = false }
+        do {
+            vehicle = try await service.vehicle()
+        } catch {
+            vehicleErrorMessage = error.localizedDescription
+        }
+    }
+
+    private func performReservationAction(_ action: () async throws -> Reservation) async {
+        error = nil
+        isPerformingAction = true
+        defer { isPerformingAction = false }
+
+        do {
+            let reservation = try await action()
+            setActiveReservation(reservation)
+            if let index = history.firstIndex(where: { $0.id == reservation.id }) {
+                history[index] = reservation
+            } else {
+                history.insert(reservation, at: 0)
+            }
         } catch {
             self.error = .requestFailed(error.localizedDescription)
         }

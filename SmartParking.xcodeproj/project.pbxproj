@@ -48,7 +48,6 @@
 		DC77BD830473A939C6711389 /* FindSpotModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4B60FF382295B9AAB13C2F0 /* FindSpotModels.swift */; };
 		DFC944F6630D70C17E0F67D9 /* ReserveSpotView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7842261127B8C973F3014152 /* ReserveSpotView.swift */; };
 		ED44D0F10ECFC99D879266F5 /* ReservationModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0045FE43CF72965E42503372 /* ReservationModels.swift */; };
-		F81AF2528D286A5EF2387865 /* FindCarModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0A44BA1F985C52E7D39B52 /* FindCarModels.swift */; };
 		FC1FB4D7510C072F41B3E2F3 /* Pills.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31C5B08A176B969F4F141F23 /* Pills.swift */; };
 		FF02896590A0D37C13A9F4B3 /* FindSpotView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 209BB54A3C5D0D7BD82DB70D /* FindSpotView.swift */; };
 /* End PBXBuildFile section */
@@ -88,7 +87,6 @@
 		CE10FBB9AA075CE9397D9BDD /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		CEC58F4E3CBAD7CF19E7962D /* ResponseCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponseCache.swift; sourceTree = "<group>"; };
 		DA91CC8380974220F8463130 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
-		DB0A44BA1F985C52E7D39B52 /* FindCarModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindCarModels.swift; sourceTree = "<group>"; };
 		DDAB4AE8ABAED6F071013CA4 /* AppTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTabBar.swift; sourceTree = "<group>"; };
 		DDB0912E6FB8BD424BC9D824 /* Typography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Typography.swift; sourceTree = "<group>"; };
 		E1189DAA764AE4FB841E817E /* LevelModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LevelModels.swift; sourceTree = "<group>"; };
@@ -208,7 +206,6 @@
 			isa = PBXGroup;
 			children = (
 				EBA60E9FD350426E26506664 /* AppUser.swift */,
-				DB0A44BA1F985C52E7D39B52 /* FindCarModels.swift */,
 				A4B60FF382295B9AAB13C2F0 /* FindSpotModels.swift */,
 				E1189DAA764AE4FB841E817E /* LevelModels.swift */,
 				559D84270D8F42093A6C88F7 /* ParkingData.swift */,
@@ -293,7 +290,6 @@
 				A6A8D7F3E23EC520973A206A /* AuthViewModel.swift in Sources */,
 				784D1D84AB77BD4CAF898A77 /* CampusFullView.swift in Sources */,
 				A84B621964648F955BA4E5DC /* FindCarComponents.swift in Sources */,
-				F81AF2528D286A5EF2387865 /* FindCarModels.swift in Sources */,
 				B655AE035CB4C865BC784FA2 /* FindCarView.swift in Sources */,
 				D1B76E82717655BCCDFB0BAC /* FindSpotComponents.swift in Sources */,
 				DC77BD830473A939C6711389 /* FindSpotModels.swift in Sources */,

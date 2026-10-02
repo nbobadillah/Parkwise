@@ -1,17 +1,30 @@
 import SwiftUI
 
 struct FindCarView: View {
-    @State private var mode: RouteMode = .direct
+    @ObservedObject var viewModel: ReservationViewModel
 
     var body: some View {
         VStack(spacing: 0) {
             header
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    summary
-                    floorCard
-                    modePicker
-                    steps
+                    if viewModel.isLoadingVehicle {
+                        ProgressView()
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else if let vehicle = viewModel.vehicle {
+                        if let errorMessage = viewModel.vehicleErrorMessage {
+                            AuthBanner(message: errorMessage, isError: true)
+                        }
+                        summary(vehicle)
+                    } else if let errorMessage = viewModel.vehicleErrorMessage {
+                        AuthBanner(message: errorMessage, isError: true)
+                    } else {
+                        PlaceholderView(
+                            title: "No parked car",
+                            message: "A checked-in reservation will appear here.",
+                            icon: "car"
+                        )
+                    }
                 }
                 .padding(.horizontal, 18)
                 .padding(.top, 18)
@@ -19,15 +32,15 @@ struct FindCarView: View {
             }
         }
         .background(Palette.screen)
+        .task { await viewModel.loadVehicle() }
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Find my car")
                 .font(.system(size: 20, weight: .bold))
-                .tracking(-0.3)
                 .foregroundStyle(Palette.ink)
-            Text(FindCarData.parkedAt)
+            Text("Vehicle location")
                 .font(.system(size: 13))
                 .foregroundStyle(Palette.subtle)
         }
@@ -35,7 +48,6 @@ struct FindCarView: View {
         .padding(.horizontal, 18)
         .padding(.top, 4)
         .padding(.bottom, 17)
-        // En esta pantalla el blanco NO invade el área de la barra de estado
         .background(Palette.card, ignoresSafeAreaEdges: [])
         .overlay(alignment: .bottom) {
             Rectangle()
@@ -44,53 +56,21 @@ struct FindCarView: View {
         }
     }
 
-    private var summary: some View {
+    private func summary(_ vehicle: ParkedVehicle) -> some View {
         HStack(spacing: 12) {
             SummaryTile(
                 label: "Spot",
-                value: FindCarData.spotCode,
-                caption: FindCarData.levelTitle,
+                value: vehicle.spotCode,
+                caption: "\(vehicle.levelCode) · Zone \(vehicle.zone)",
                 valueColor: Palette.accent,
                 monospaced: true
             )
             SummaryTile(
-                label: "Walk",
-                value: FindCarData.walkTime,
-                caption: FindCarData.entrance,
+                label: "Parked",
+                value: vehicle.parkedAt.formatted(date: .omitted, time: .shortened),
+                caption: vehicle.parkedAt.formatted(date: .abbreviated, time: .omitted),
                 valueColor: Palette.ink
             )
-        }
-    }
-
-    private var floorCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            CaptionLabel(text: "\(FindCarData.levelTitle) — Floor view")
-            FloorMap(
-                rows: FindCarData.floor,
-                spotCode: FindCarData.spotCode,
-                distance: FindCarData.distance
-            )
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .cardStyle(radius: 8)
-    }
-
-    private var modePicker: some View {
-        HStack(spacing: 8) {
-            ForEach(RouteMode.allCases) { item in
-                RouteModeButton(title: item.title, isSelected: mode == item) {
-                    mode = item
-                }
-            }
-        }
-    }
-
-    private var steps: some View {
-        VStack(spacing: 8) {
-            ForEach(FindCarData.steps) { step in
-                RouteStepRow(step: step)
-            }
         }
     }
 }
