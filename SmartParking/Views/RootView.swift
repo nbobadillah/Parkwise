@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 enum HomeRoute {
     case dashboard
@@ -11,6 +12,8 @@ enum MapRoute {
 }
 
 struct RootView: View {
+    @EnvironmentObject private var authViewModel: AuthViewModel
+    @ObservedObject private var locationService: LocationService
     let parkingService: ParkingServicing
     let reservationService: ReservationServicing
 
@@ -22,11 +25,25 @@ struct RootView: View {
     @State private var mapRoute: MapRoute = .floor
     @State private var selectedSpot: SpotListing?
 
-    init(parkingService: ParkingServicing, reservationService: ReservationServicing) {
+    init(
+        parkingService: ParkingServicing,
+        reservationService: ReservationServicing,
+        locationService: LocationService,
+        parkedCarStore: ParkedCarStore
+    ) {
         self.parkingService = parkingService
         self.reservationService = reservationService
-        _homeViewModel = StateObject(wrappedValue: HomeViewModel(service: parkingService))
-        _reservationViewModel = StateObject(wrappedValue: ReservationViewModel(service: reservationService))
+        _locationService = ObservedObject(wrappedValue: locationService)
+        _homeViewModel = StateObject(
+            wrappedValue: HomeViewModel(service: parkingService, locationService: locationService)
+        )
+        _reservationViewModel = StateObject(
+            wrappedValue: ReservationViewModel(
+                service: reservationService,
+                locationService: locationService,
+                parkedCarStore: parkedCarStore
+            )
+        )
     }
 
     var body: some View {
@@ -35,7 +52,48 @@ struct RootView: View {
             AppTabBar(selection: tabSelection)
         }
         .background(Palette.screen)
-        .task(id: tab) { await homeViewModel.loadLevels() }
+        .task(id: tab) {
+            if tab == .home {
+                homeViewModel.prepareLocationPermission()
+            }
+            await homeViewModel.loadLevels(isAuthenticated: authViewModel.isAuthenticated)
+        }
+        .onChange(of: locationService.authorization) { _, _ in
+            if tab == .home {
+                homeViewModel.locationAuthorizationDidChange()
+                Task { await homeViewModel.loadLevels(isAuthenticated: authViewModel.isAuthenticated) }
+            }
+        }
+        .onChange(of: locationService.currentLocation?.timestamp) { _, _ in
+            if tab == .home {
+                Task {
+                    await homeViewModel.refreshLevelsForLocationChange(
+                        isAuthenticated: authViewModel.isAuthenticated
+                    )
+                }
+            }
+        }
+        .onChange(of: authViewModel.isAuthenticated) { _, isAuthenticated in
+            Task { await homeViewModel.loadLevels(isAuthenticated: isAuthenticated) }
+        }
+        .alert(item: $homeViewModel.locationPermissionPrompt) { prompt in
+            switch prompt {
+            case .explanation:
+                Alert(
+                    title: Text("Use your location?"),
+                    message: Text("Location is optional. Parkwise uses it to record approximate demand when campus is full and to save your car's position after check-in."),
+                    primaryButton: .default(Text("Continue"), action: homeViewModel.requestLocationPermission),
+                    secondaryButton: .cancel(Text("Not now"), action: homeViewModel.dismissLocationPermissionPrompt)
+                )
+            case .settings:
+                Alert(
+                    title: Text("Location access is off"),
+                    message: Text("You can enable location in Settings. Parking and reservations remain available without it."),
+                    primaryButton: .default(Text("Open Settings"), action: openSettings),
+                    secondaryButton: .cancel(Text("Not now"), action: homeViewModel.dismissLocationPermissionPrompt)
+                )
+            }
+        }
     }
 
     // Al tocar cualquier pestaña se vuelve a la pantalla principal de cada sección
@@ -48,6 +106,11 @@ struct RootView: View {
                 tab = newTab
             }
         )
+    }
+
+    private func openSettings() {
+        guard let settingsURL = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(settingsURL)
     }
 
     @ViewBuilder

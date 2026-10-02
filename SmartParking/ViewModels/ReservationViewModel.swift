@@ -36,16 +36,26 @@ final class ReservationViewModel: ObservableObject {
     @Published private(set) var remainingTime: TimeInterval?
     @Published private(set) var history: [Reservation] = []
     @Published private(set) var vehicle: ParkedVehicle?
+    @Published private(set) var parkedCar: ParkedCar?
     @Published private(set) var isLoadingVehicle = false
     @Published private(set) var vehicleErrorMessage: String?
     @Published private(set) var isPerformingAction = false
     @Published private(set) var error: ReservationViewModelError?
 
     private let service: ReservationServicing
+    private let locationService: LocationServicing
+    private let parkedCarStore: ParkedCarStoring
     private var countdownTask: Task<Void, Never>?
 
-    init(service: ReservationServicing) {
+    init(
+        service: ReservationServicing,
+        locationService: LocationServicing = LocationService.shared,
+        parkedCarStore: ParkedCarStoring = ParkedCarStore.shared
+    ) {
         self.service = service
+        self.locationService = locationService
+        self.parkedCarStore = parkedCarStore
+        parkedCar = parkedCarStore.parkedCar
         Task {
             await loadActive()
             await loadHistory()
@@ -95,9 +105,15 @@ final class ReservationViewModel: ObservableObject {
         await performReservationAction {
             try await self.service.checkIn(id: reservation.id)
         }
-        if activeReservation?.status == .fulfilled {
-            await loadVehicle()
+        guard let checkedInReservation = activeReservation, checkedInReservation.status == .fulfilled else { return }
+        if let location = locationService.currentLocation {
+            parkedCar = parkedCarStore.save(
+                location: location,
+                levelCode: checkedInReservation.levelCode,
+                spotCode: checkedInReservation.spotCode
+            )
         }
+        await loadVehicle()
     }
 
     func release() async {
@@ -107,6 +123,8 @@ final class ReservationViewModel: ObservableObject {
             try await self.service.release(id: reservation.id)
         }
         if activeReservation?.status == .cancelled || activeReservation?.status == .released {
+            parkedCarStore.clear()
+            parkedCar = nil
             await loadVehicle()
         }
     }

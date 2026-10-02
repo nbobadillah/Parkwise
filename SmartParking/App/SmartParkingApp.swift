@@ -5,12 +5,18 @@ struct SmartParkingApp: App {
     @StateObject private var authViewModel: AuthViewModel
     private let parkingService: ParkingServicing
     private let reservationService: ReservationServicing
+    private let locationService: LocationService
+    private let parkedCarStore: ParkedCarStore
 
     init() {
         let authService = BackendAuthService()
+        let locationService = LocationService.shared
+        let parkedCarStore = ParkedCarStore.shared
         TelemetryService.shared.token = { authService.token }
         parkingService = BackendParkingService(token: { authService.token })
         reservationService = BackendReservationService(token: { authService.token })
+        self.locationService = locationService
+        self.parkedCarStore = parkedCarStore
         _authViewModel = StateObject(wrappedValue: AuthViewModel(service: authService))
     }
 
@@ -22,7 +28,12 @@ struct SmartParkingApp: App {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .background(Palette.screen)
                 } else if authViewModel.isAuthenticated {
-                    RootView(parkingService: parkingService, reservationService: reservationService)
+                    RootView(
+                        parkingService: parkingService,
+                        reservationService: reservationService,
+                        locationService: locationService,
+                        parkedCarStore: parkedCarStore
+                    )
                 } else {
                     LoginView()
                 }

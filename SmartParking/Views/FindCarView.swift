@@ -20,6 +20,14 @@ struct FindCarView: View {
                         floorCard(vehicle)
                         modePicker
                         steps
+                    } else if let parkedCar = viewModel.parkedCar {
+                        if let errorMessage = viewModel.vehicleErrorMessage {
+                            AuthBanner(message: errorMessage, isError: true)
+                        }
+                        summary(parkedCar)
+                        floorCard(parkedCar)
+                        modePicker
+                        steps
                     } else if let errorMessage = viewModel.vehicleErrorMessage {
                         AuthBanner(message: errorMessage, isError: true)
                     } else {
@@ -44,7 +52,7 @@ struct FindCarView: View {
             Text("Find my car")
                 .font(.system(size: 20, weight: .bold))
                 .foregroundStyle(Palette.ink)
-            Text(viewModel.vehicle.map { $0.parkedAt.formatted(date: .abbreviated, time: .shortened) } ?? "Vehicle location")
+            Text(parkedAtText)
                 .font(.system(size: 13))
                 .foregroundStyle(Palette.subtle)
         }
@@ -78,10 +86,55 @@ struct FindCarView: View {
         }
     }
 
+    private var parkedAtText: String {
+        if let vehicle = viewModel.vehicle {
+            return vehicle.parkedAt.formatted(date: .abbreviated, time: .shortened)
+        }
+        if let parkedCar = viewModel.parkedCar {
+            return parkedCar.parkedAt.formatted(date: .abbreviated, time: .shortened)
+        }
+        return "Vehicle location"
+    }
+
+    private func summary(_ parkedCar: ParkedCar) -> some View {
+        HStack(spacing: 12) {
+            SummaryTile(
+                label: "Spot",
+                value: parkedCar.spotCode ?? "—",
+                caption: parkedCar.levelCode ?? "Parking level unavailable",
+                valueColor: Palette.accent,
+                monospaced: true
+            )
+            SummaryTile(
+                label: "Walk",
+                value: "—",
+                caption: "Distance unavailable",
+                valueColor: Palette.ink
+            )
+        }
+    }
+
     private func floorCard(_ vehicle: ParkedVehicle) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             CaptionLabel(text: "\(vehicle.levelCode) · Zone \(vehicle.zone) — Floor view")
-            FloorMapUnavailable()
+            FloorMapUnavailable(parkedCar: matchingParkedCar(for: vehicle))
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardStyle(radius: 8)
+    }
+
+    private func matchingParkedCar(for vehicle: ParkedVehicle) -> ParkedCar? {
+        guard let parkedCar = viewModel.parkedCar,
+              parkedCar.levelCode == vehicle.levelCode,
+              parkedCar.spotCode == vehicle.spotCode else { return nil }
+        return parkedCar
+    }
+
+    private func floorCard(_ parkedCar: ParkedCar) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            CaptionLabel(text: "\(parkedCar.levelCode ?? "Parking level unavailable") — Floor view")
+            FloorMapUnavailable(parkedCar: parkedCar)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)

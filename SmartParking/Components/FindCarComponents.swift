@@ -35,13 +35,27 @@ struct SummaryTile: View {
 }
 
 struct FloorMapUnavailable: View {
+    let parkedCar: ParkedCar?
+
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .fill(Palette.neutral)
-            Text("Floor map unavailable")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(Palette.muted)
+            VStack(spacing: 8) {
+                Text(parkedCar == nil ? "Floor map unavailable" : "Saved GPS position")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(Palette.muted)
+                if let parkedCar {
+                    Text(String(
+                        format: "%.5f, %.5f",
+                        locale: Locale(identifier: "en_US_POSIX"),
+                        parkedCar.latitude,
+                        parkedCar.longitude
+                    ))
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .foregroundStyle(Palette.ink)
+                }
+            }
         }
         .frame(height: 260)
     }
