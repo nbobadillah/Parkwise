@@ -8,10 +8,14 @@ enum SpotKind: Equatable {
 
     var title: String {
         switch self {
-        case .standard: return "Standard"
-        case .vip: return "VIP"
-        case .electric: return "Electric \u{26A1}\u{FE0F}"
-        case .accessible: return "Accessible \u{267F}\u{FE0F}"
+        case .standard:
+            return "Standard"
+        case .vip:
+            return "VIP"
+        case .electric:
+            return "Electric \u{26A1}\u{FE0F}"
+        case .accessible:
+            return "Accessible \u{267F}\u{FE0F}"
         }
     }
 }
@@ -22,19 +26,8 @@ enum FindSpotFilter: String, CaseIterable, Identifiable {
     case electric = "Electric"
     case accessible = "Accessible"
 
-    var id: String { rawValue }
-
-    var requestFilters: SpotFilters {
-        switch self {
-        case .available:
-            return SpotFilters(available: true)
-        case .vip:
-            return SpotFilters(vip: true)
-        case .electric:
-            return SpotFilters(ev: true)
-        case .accessible:
-            return SpotFilters(accessible: true)
-        }
+    var id: String {
+        rawValue
     }
 }
 
@@ -76,5 +69,7 @@ struct SpotListing: Identifiable, Equatable {
         kind = .standard
     }
 
-    var levelTitle: String { "\(levelCode) · Zone \(zone)" }
+    var levelTitle: String {
+        "\(levelCode) · Zone \(zone)"
+    }
 }

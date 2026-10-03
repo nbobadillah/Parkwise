@@ -73,6 +73,12 @@ final class TelemetryService {
         ])
     }
 
+    func trackFilterApplied(filter: FindSpotFilter) {
+        track("filter_applied", [
+            "filter": .string(filter.rawValue.lowercased())
+        ])
+    }
+
     func trackAppOpened() {
         track("app_opened", ["platform": .string("ios")])
     }
