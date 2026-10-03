@@ -7,17 +7,26 @@ struct SmartParkingApp: App {
     private let reservationService: ReservationServicing
     private let locationService: LocationService
     private let parkedCarStore: ParkedCarStore
+    private let networkMonitor: NetworkMonitor
 
     init() {
         let authService = BackendAuthService()
         let locationService = LocationService.shared
         let parkedCarStore = ParkedCarStore.shared
+        let networkMonitor = NetworkMonitor.shared
+
         TelemetryService.shared.token = { authService.token }
+
         parkingService = BackendParkingService(token: { authService.token })
         reservationService = BackendReservationService(token: { authService.token })
+
         self.locationService = locationService
         self.parkedCarStore = parkedCarStore
-        _authViewModel = StateObject(wrappedValue: AuthViewModel(service: authService))
+        self.networkMonitor = networkMonitor
+
+        _authViewModel = StateObject(
+            wrappedValue: AuthViewModel(service: authService)
+        )
     }
 
     var body: some Scene {
@@ -32,14 +41,17 @@ struct SmartParkingApp: App {
                         parkingService: parkingService,
                         reservationService: reservationService,
                         locationService: locationService,
-                        parkedCarStore: parkedCarStore
+                        parkedCarStore: parkedCarStore,
+                        networkMonitor: networkMonitor
                     )
                 } else {
                     LoginView()
                 }
             }
             .environmentObject(authViewModel)
-            .task { await authViewModel.restoreSession() }
+            .task {
+                await authViewModel.restoreSession()
+            }
             .onChange(of: authViewModel.isAuthenticated) { _, isAuthenticated in
                 if isAuthenticated {
                     TelemetryService.shared.trackAppOpened()

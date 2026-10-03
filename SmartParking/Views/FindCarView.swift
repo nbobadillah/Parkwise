@@ -4,6 +4,7 @@ import SwiftUI
 struct FindCarView: View {
     @ObservedObject var viewModel: ReservationViewModel
     @ObservedObject var locationService: LocationService
+    @ObservedObject private var networkMonitor: NetworkMonitor
     let destinationID: String?
     @StateObject private var parkingViewModel: ParkingMapViewModel
     @State private var mode: RouteMode = .direct
@@ -13,11 +14,13 @@ struct FindCarView: View {
         viewModel: ReservationViewModel,
         parkingService: ParkingServicing,
         locationService: LocationService,
-        destinationID: String?
+        destinationID: String?,
+        networkMonitor: NetworkMonitor
     ) {
         self.viewModel = viewModel
         self.locationService = locationService
         self.destinationID = destinationID
+        _networkMonitor = ObservedObject(wrappedValue: networkMonitor)
         _parkingViewModel = StateObject(
             wrappedValue: ParkingMapViewModel(service: parkingService, destination: destinationID)
         )
@@ -75,7 +78,9 @@ struct FindCarView: View {
             }
         }
         .background(Palette.screen)
-        .task { await viewModel.loadVehicle() }
+        .task(id: networkMonitor.isConnected) {
+            await viewModel.loadVehicle()
+        }
         .task(id: (vehicleLevelCode ?? "") + (destinationID ?? "")) {
             guard let vehicleLevelCode else { return }
             parkingViewModel.destination = destinationID

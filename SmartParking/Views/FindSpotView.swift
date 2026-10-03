@@ -5,6 +5,7 @@ struct FindSpotView: View {
     let destinationID: String?
     let onReserve: (SpotListing) -> Void
 
+    @ObservedObject private var networkMonitor: NetworkMonitor
     @StateObject private var viewModel: FindSpotViewModel
     @State private var query = ""
 
@@ -12,35 +13,67 @@ struct FindSpotView: View {
         levels: [LevelSummary],
         destinationID: String?,
         service: ParkingServicing,
+        networkMonitor: NetworkMonitor,
         onReserve: @escaping (SpotListing) -> Void
     ) {
         self.levels = levels
         self.destinationID = destinationID
         self.onReserve = onReserve
+        _networkMonitor = ObservedObject(wrappedValue: networkMonitor)
         _viewModel = StateObject(wrappedValue: FindSpotViewModel(service: service))
+    }
+
+    private var filteredSpots: [SpotListing] {
+        let spots = viewModel.spots(matching: query)
+
+        guard query.isEmpty, let recommendedSpot = viewModel.recommendedSpot else {
+            return spots
+        }
+
+        return spots.filter { $0.id != recommendedSpot.id }
+    }
+
+    private var recommendedSpot: SpotListing? {
+        query.isEmpty ? viewModel.recommendedSpot : nil
     }
 
     var body: some View {
         VStack(spacing: 0) {
             header
+
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
                     Text("\(viewModel.spots(matching: query).count) spots found")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(Palette.subtle)
 
-                    if viewModel.isLoading {
-                        ProgressView()
-                            .frame(maxWidth: .infinity)
-                    }
+                    if let recommendedSpot {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Recommended spot")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundStyle(Palette.ink)
 
-                    VStack(spacing: 10) {
-                        ForEach(viewModel.spots(matching: query)) { spot in
-                            SpotResultRow(spot: spot) {
-                                onReserve(spot)
+                            SpotResultRow(spot: recommendedSpot) {
+                                onReserve(recommendedSpot)
                             }
                         }
                     }
+
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
+                    } else if viewModel.spots(matching: query).isEmpty {
+                        emptyState
+                    } else if !filteredSpots.isEmpty {
+                        VStack(spacing: 10) {
+                            ForEach(filteredSpots) { spot in
+                                SpotResultRow(spot: spot) {
+                                    onReserve(spot)
+                                }
+                            }
+                        }
+                    }
+
                     if let errorMessage = viewModel.errorMessage {
                         AuthBanner(message: errorMessage, isError: true)
                     }
@@ -51,8 +84,16 @@ struct FindSpotView: View {
             }
         }
         .background(Palette.screen)
-        .task(id: levels.map(\.code).joined(separator: ",") + (destinationID ?? "") + viewModel.filter.rawValue) {
-            await viewModel.load(levels: levels, destinationID: destinationID)
+        .task(
+            id: levels.map(\.code).joined(separator: ",")
+                + (destinationID ?? "")
+                + viewModel.filter.rawValue
+                + String(networkMonitor.isConnected)
+        ) {
+            await viewModel.load(
+                levels: levels,
+                destinationID: destinationID
+            )
         }
     }
 
@@ -71,10 +112,15 @@ struct FindSpotView: View {
 
                 HStack(spacing: 8) {
                     ForEach(FindSpotFilter.allCases) { item in
-                        FilterChip(title: item.rawValue, isSelected: viewModel.filter == item) {
+                        FilterChip(
+                            title: item.rawValue,
+                            isSelected: viewModel.filter == item
+                        ) {
                             viewModel.filter = item
+                            TelemetryService.shared.trackFilterApplied(filter: item)
                         }
                     }
+
                     Spacer(minLength: 0)
                 }
             }
@@ -96,10 +142,12 @@ struct FindSpotView: View {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 14))
                 .foregroundStyle(Palette.muted)
+
             TextField(
                 "Search",
                 text: $query,
-                prompt: Text("Spot code, zone, level…").foregroundColor(Palette.muted)
+                prompt: Text("Spot code, zone, level…")
+                    .foregroundColor(Palette.muted)
             )
             .font(.system(size: 14))
             .foregroundStyle(Palette.ink)
@@ -133,5 +181,28 @@ struct FindSpotView: View {
                 )
         }
         .buttonStyle(.plain)
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "parkingsign.circle")
+                .font(.system(size: 30))
+                .foregroundStyle(Palette.muted)
+
+            Text("No spots found")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Palette.ink)
+
+            Text(
+                query.isEmpty
+                    ? "There are no spots matching this filter"
+                    : "Try another search"
+            )
+            .font(.system(size: 13))
+            .foregroundStyle(Palette.subtle)
+            .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 40)
     }
 }

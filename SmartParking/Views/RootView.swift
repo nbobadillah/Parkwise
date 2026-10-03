@@ -14,6 +14,7 @@ enum MapRoute {
 struct RootView: View {
     @EnvironmentObject private var authViewModel: AuthViewModel
     @ObservedObject private var locationService: LocationService
+    @ObservedObject private var networkMonitor: NetworkMonitor
     let parkingService: ParkingServicing
     let reservationService: ReservationServicing
 
@@ -29,11 +30,13 @@ struct RootView: View {
         parkingService: ParkingServicing,
         reservationService: ReservationServicing,
         locationService: LocationService,
-        parkedCarStore: ParkedCarStore
+        parkedCarStore: ParkedCarStore,
+        networkMonitor: NetworkMonitor
     ) {
         self.parkingService = parkingService
         self.reservationService = reservationService
         _locationService = ObservedObject(wrappedValue: locationService)
+        _networkMonitor = ObservedObject(wrappedValue: networkMonitor)
         _homeViewModel = StateObject(
             wrappedValue: HomeViewModel(service: parkingService, locationService: locationService)
         )
@@ -48,6 +51,16 @@ struct RootView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            if !networkMonitor.isConnected {
+                AuthBanner(
+                    message: "No internet connection. Cached data will be used when available.",
+                    isError: true
+                )
+                .padding(.horizontal, 12)
+                .padding(.top, 8)
+                .padding(.bottom, 4)
+            }
+
             content
             AppTabBar(selection: tabSelection)
         }
@@ -58,10 +71,23 @@ struct RootView: View {
             }
             await homeViewModel.loadLevels(isAuthenticated: authViewModel.isAuthenticated)
         }
+        .onChange(of: networkMonitor.isConnected) { _, isConnected in
+            guard isConnected else { return }
+
+            Task {
+                await homeViewModel.loadLevels(
+                    isAuthenticated: authViewModel.isAuthenticated
+                )
+            }
+        }
         .onChange(of: locationService.authorization) { _, _ in
             if tab == .home {
                 homeViewModel.locationAuthorizationDidChange()
-                Task { await homeViewModel.loadLevels(isAuthenticated: authViewModel.isAuthenticated) }
+                Task {
+                    await homeViewModel.loadLevels(
+                        isAuthenticated: authViewModel.isAuthenticated
+                    )
+                }
             }
         }
         .onChange(of: locationService.currentLocation?.timestamp) { _, _ in
@@ -74,23 +100,37 @@ struct RootView: View {
             }
         }
         .onChange(of: authViewModel.isAuthenticated) { _, isAuthenticated in
-            Task { await homeViewModel.loadLevels(isAuthenticated: isAuthenticated) }
+            Task {
+                await homeViewModel.loadLevels(isAuthenticated: isAuthenticated)
+            }
         }
         .alert(item: $homeViewModel.locationPermissionPrompt) { prompt in
             switch prompt {
             case .explanation:
                 Alert(
                     title: Text("Use your location?"),
-                    message: Text("Location is optional. Parkwise uses it to record approximate demand when campus is full and to save your car's position after check-in."),
-                    primaryButton: .default(Text("Continue"), action: homeViewModel.requestLocationPermission),
-                    secondaryButton: .cancel(Text("Not now"), action: homeViewModel.dismissLocationPermissionPrompt)
+                    message: Text("Location is optional. Parkwise uses it to record approximate demand when campus is full and to save your car's position aftercheck-in."),
+                    primaryButton: .default(
+                        Text("Continue"),
+                        action: homeViewModel.requestLocationPermission
+                    ),
+                    secondaryButton: .cancel(
+                        Text("Not now"),
+                        action: homeViewModel.dismissLocationPermissionPrompt
+                    )
                 )
             case .settings:
                 Alert(
                     title: Text("Location access is off"),
                     message: Text("You can enable location in Settings. Parking and reservations remain available without it."),
-                    primaryButton: .default(Text("Open Settings"), action: openSettings),
-                    secondaryButton: .cancel(Text("Not now"), action: homeViewModel.dismissLocationPermissionPrompt)
+                    primaryButton: .default(
+                        Text("Open Settings"),
+                        action: openSettings
+                    ),
+                    secondaryButton: .cancel(
+                        Text("Not now"),
+                        action: homeViewModel.dismissLocationPermissionPrompt
+                    )
                 )
             }
         }
@@ -139,7 +179,8 @@ struct RootView: View {
                     FindSpotView(
                         levels: homeViewModel.levels,
                         destinationID: homeViewModel.destinationID,
-                        service: parkingService
+                        service: parkingService,
+                        networkMonitor: networkMonitor
                     ) { spot in
                         selectedSpot = spot
                         tab = .reserve
@@ -164,13 +205,19 @@ struct RootView: View {
                     viewModel: reservationViewModel,
                     parkingService: parkingService,
                     locationService: locationService,
-                    destinationID: homeViewModel.destinationID
+                    destinationID: homeViewModel.destinationID,
+                    networkMonitor: networkMonitor
                 )
             }
         case .reserve:
-            ReserveSpotView(selectedSpot: selectedSpot, viewModel: reservationViewModel)
+            ReserveSpotView(
+                selectedSpot: selectedSpot,
+                viewModel: reservationViewModel
+            )
         case .profile:
-            ProfileView()
+            ProfileView(
+                reservationViewModel: reservationViewModel
+            )
         }
     }
 }
@@ -200,3 +247,5 @@ struct PlaceholderView: View {
         .background(Palette.screen)
     }
 }
+
+

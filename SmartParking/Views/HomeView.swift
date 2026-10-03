@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct HomeView: View {
+    @EnvironmentObject private var authViewModel: AuthViewModel
     @ObservedObject var viewModel: HomeViewModel
     let onOpenLevel: (LevelSummary) -> Void
     let onFindSpot: () -> Void
@@ -38,12 +39,12 @@ struct HomeView: View {
                 Text("Good morning")
                     .font(.system(size: 15))
                     .foregroundStyle(Palette.muted)
-                Text(ParkingData.userName)
+                Text(authViewModel.user?.displayName ?? "User")
                     .font(.system(size: 26, weight: .bold))
                     .foregroundStyle(Palette.ink)
             }
             Spacer()
-            Text(ParkingData.userInitials)
+            Text(authViewModel.user?.initials ?? "U")
                 .font(.system(size: 15, weight: .bold))
                 .foregroundStyle(.white)
                 .frame(width: 46, height: 46)
@@ -101,5 +102,4 @@ struct HomeView: View {
             )
         }
     }
-
 }
