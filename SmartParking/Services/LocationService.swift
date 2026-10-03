@@ -2,7 +2,16 @@ import CoreLocation
 import Foundation
 
 @MainActor
-final class LocationService: NSObject, ObservableObject {
+protocol LocationServicing: AnyObject {
+    var authorization: CLAuthorizationStatus { get }
+    var currentLocation: CLLocation? { get }
+    var isAuthorized: Bool { get }
+    var isDenied: Bool { get }
+    func start()
+}
+
+@MainActor
+final class LocationService: NSObject, ObservableObject, LocationServicing {
     static let shared = LocationService()
 
     static let walkingSpeed: CLLocationSpeed = 1.3

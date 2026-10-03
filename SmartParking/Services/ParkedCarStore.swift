@@ -15,7 +15,14 @@ struct ParkedCar: Codable, Equatable {
 }
 
 @MainActor
-final class ParkedCarStore: ObservableObject {
+protocol ParkedCarStoring: AnyObject {
+    var parkedCar: ParkedCar? { get }
+    func save(location: CLLocation, levelCode: String?, spotCode: String?) -> ParkedCar
+    func clear()
+}
+
+@MainActor
+final class ParkedCarStore: ObservableObject, ParkedCarStoring {
     static let shared = ParkedCarStore()
 
     @Published private(set) var parkedCar: ParkedCar?

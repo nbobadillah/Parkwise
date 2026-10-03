@@ -31,7 +31,7 @@ struct SpotResultRow: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            Text(spot.id)
+            Text(spot.code)
                 .font(.system(size: 12, weight: .bold, design: .monospaced))
                 .foregroundStyle(Palette.accent)
                 .frame(width: 46, height: 46)
@@ -76,6 +76,7 @@ struct SpotResultRow: View {
                     )
             }
             .buttonStyle(.plain)
+            .disabled(!spot.isAvailable)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 15)

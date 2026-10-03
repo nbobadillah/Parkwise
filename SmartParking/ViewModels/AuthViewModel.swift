@@ -13,9 +13,25 @@ final class AuthViewModel: ObservableObject {
     @Published var confirmPassword = ""
 
     private let service: AuthServicing
+    private var sessionExpiredObserver: NSObjectProtocol?
 
     init(service: AuthServicing) {
         self.service = service
+        sessionExpiredObserver = NotificationCenter.default.addObserver(
+            forName: .sessionExpired,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.signOut()
+            }
+        }
+    }
+
+    deinit {
+        if let sessionExpiredObserver {
+            NotificationCenter.default.removeObserver(sessionExpiredObserver)
+        }
     }
 
     var isAuthenticated: Bool { user != nil }

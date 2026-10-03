@@ -6,14 +6,16 @@ struct HomeView: View {
     let onFindSpot: () -> Void
     let onFindCar: () -> Void
 
-    @State private var destination = ParkingData.destinations[0]
-
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
                 header
                 destinationPicker
-                ForecastCard(slots: ParkingData.forecast)
+                ForecastCard(
+                    points: viewModel.forecastPoints,
+                    levelCode: viewModel.forecastLevelCode,
+                    isLoading: viewModel.isLoadingForecast
+                )
                 recommendation
                 levelList
                 actions
@@ -23,7 +25,11 @@ struct HomeView: View {
             .padding(.bottom, 26)
         }
         .background(Palette.screen)
-        .task(id: viewModel.arrivalAt) { await viewModel.loadRecommendation() }
+        .task { await viewModel.loadBuildings() }
+        .task(id: viewModel.arrivalAt) {
+            await viewModel.loadRecommendation()
+            await viewModel.loadForecast()
+        }
     }
 
     private var header: some View {
@@ -50,9 +56,9 @@ struct HomeView: View {
             SectionLabel(text: "Destination")
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
-                    ForEach(ParkingData.destinations, id: \.self) { item in
-                        ChoiceChip(title: item, isSelected: destination == item) {
-                            destination = item
+                    ForEach(viewModel.buildings) { building in
+                        ChoiceChip(title: building.name, isSelected: viewModel.selectedBuildingID == building.id) {
+                            viewModel.selectBuilding(id: building.id)
                         }
                     }
                 }
@@ -95,4 +101,5 @@ struct HomeView: View {
             )
         }
     }
+
 }

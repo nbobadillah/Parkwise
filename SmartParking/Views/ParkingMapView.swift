@@ -3,13 +3,23 @@ import SwiftUI
 struct ParkingMapView: View {
     @Binding var levelCode: String
     let levels: [LevelSummary]
+    let destinationID: String?
+    let onReserve: (ParkingSpot) -> Void
 
     @StateObject private var viewModel: ParkingMapViewModel
 
-    init(levelCode: Binding<String>, levels: [LevelSummary], service: ParkingServicing) {
+    init(
+        levelCode: Binding<String>,
+        levels: [LevelSummary],
+        destinationID: String?,
+        service: ParkingServicing,
+        onReserve: @escaping (ParkingSpot) -> Void
+    ) {
         _levelCode = levelCode
         self.levels = levels
-        _viewModel = StateObject(wrappedValue: ParkingMapViewModel(service: service))
+        self.destinationID = destinationID
+        self.onReserve = onReserve
+        _viewModel = StateObject(wrappedValue: ParkingMapViewModel(service: service, destination: destinationID))
     }
 
     var body: some View {
@@ -20,8 +30,8 @@ struct ParkingMapView: View {
                 if let spot = viewModel.selectedSpot {
                     SelectedSpotSheet(
                         spot: spot,
-                        isReserved: viewModel.reservedSpotID == spot.id,
-                        onReserve: { viewModel.reserve(spot.id) },
+                        isReserved: spot.state == .you,
+                        onReserve: { onReserve(spot) },
                         onClose: { viewModel.selectedSpotID = nil }
                     )
                     .transition(.move(edge: .bottom))
@@ -38,7 +48,10 @@ struct ParkingMapView: View {
         }
         .background(Palette.screen)
         .animation(.easeOut(duration: 0.22), value: viewModel.selectedSpotID)
-        .task(id: levelCode) { await viewModel.run(levelCode: levelCode) }
+        .task(id: levelCode + (destinationID ?? "")) {
+            viewModel.destination = destinationID
+            await viewModel.run(levelCode: levelCode)
+        }
     }
 
     private var header: some View {

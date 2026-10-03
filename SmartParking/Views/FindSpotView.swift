@@ -1,26 +1,48 @@
 import SwiftUI
 
 struct FindSpotView: View {
+    let levels: [LevelSummary]
+    let destinationID: String?
     let onReserve: (SpotListing) -> Void
 
+    @StateObject private var viewModel: FindSpotViewModel
     @State private var query = ""
-    @State private var filter = FindSpotData.filters[0]
+
+    init(
+        levels: [LevelSummary],
+        destinationID: String?,
+        service: ParkingServicing,
+        onReserve: @escaping (SpotListing) -> Void
+    ) {
+        self.levels = levels
+        self.destinationID = destinationID
+        self.onReserve = onReserve
+        _viewModel = StateObject(wrappedValue: FindSpotViewModel(service: service))
+    }
 
     var body: some View {
         VStack(spacing: 0) {
             header
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
-                    Text("\(FindSpotData.spots.count) spots found")
+                    Text("\(viewModel.spots(matching: query).count) spots found")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(Palette.subtle)
 
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
+                    }
+
                     VStack(spacing: 10) {
-                        ForEach(FindSpotData.spots) { spot in
+                        ForEach(viewModel.spots(matching: query)) { spot in
                             SpotResultRow(spot: spot) {
                                 onReserve(spot)
                             }
                         }
+                    }
+                    if let errorMessage = viewModel.errorMessage {
+                        AuthBanner(message: errorMessage, isError: true)
                     }
                 }
                 .padding(.horizontal, 18)
@@ -29,6 +51,9 @@ struct FindSpotView: View {
             }
         }
         .background(Palette.screen)
+        .task(id: levels.map(\.code).joined(separator: ",") + (destinationID ?? "") + viewModel.filter.rawValue) {
+            await viewModel.load(levels: levels, destinationID: destinationID)
+        }
     }
 
     private var header: some View {
@@ -45,9 +70,9 @@ struct FindSpotView: View {
                 }
 
                 HStack(spacing: 8) {
-                    ForEach(FindSpotData.filters, id: \.self) { item in
-                        FilterChip(title: item, isSelected: filter == item) {
-                            filter = item
+                    ForEach(FindSpotFilter.allCases) { item in
+                        FilterChip(title: item.rawValue, isSelected: viewModel.filter == item) {
+                            viewModel.filter = item
                         }
                     }
                     Spacer(minLength: 0)

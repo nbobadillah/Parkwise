@@ -8,7 +8,6 @@ final class ParkingMapViewModel: ObservableObject {
     @Published private(set) var fetchedAt: Date?
     @Published private(set) var fromCache = false
     @Published private(set) var errorMessage: String?
-    @Published private(set) var reservedSpotID: String?
     @Published var selectedSpotID: String?
 
     var destination: String?
@@ -17,8 +16,9 @@ final class ParkingMapViewModel: ObservableObject {
     private let service: ParkingServicing
     private let telemetry: TelemetryService
 
-    init(service: ParkingServicing, telemetry: TelemetryService? = nil) {
+    init(service: ParkingServicing, destination: String? = nil, telemetry: TelemetryService? = nil) {
         self.service = service
+        self.destination = destination
         self.telemetry = telemetry ?? .shared
     }
 
@@ -30,7 +30,6 @@ final class ParkingMapViewModel: ObservableObject {
     func run(levelCode: String) async {
         zones = []
         selectedSpotID = nil
-        reservedSpotID = nil
 
         let start = ContinuousClock.now
         let errorType = await refresh(levelCode: levelCode)
@@ -53,27 +52,10 @@ final class ParkingMapViewModel: ObservableObject {
             fetchedAt = result.fetchedAt
             fromCache = result.fromCache
             errorMessage = nil
-            markReservedSpot()
             return result.fromCache ? "network" : nil
         } catch {
             errorMessage = error.localizedDescription
             return Self.errorType(for: error)
-        }
-    }
-
-    func reserve(_ id: String) {
-        reservedSpotID = id
-        markReservedSpot()
-    }
-
-    private func markReservedSpot() {
-        guard let reservedSpotID else { return }
-        for zoneIndex in zones.indices {
-            for rowIndex in zones[zoneIndex].rows.indices {
-                for spotIndex in zones[zoneIndex].rows[rowIndex].spots.indices where zones[zoneIndex].rows[rowIndex].spots[spotIndex].id == reservedSpotID {
-                    zones[zoneIndex].rows[rowIndex].spots[spotIndex].state = .you
-                }
-            }
         }
     }
 

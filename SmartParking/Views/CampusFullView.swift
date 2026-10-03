@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct CampusFullView: View {
+    @ObservedObject var viewModel: HomeViewModel
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
@@ -14,6 +16,7 @@ struct CampusFullView: View {
             .padding(.bottom, 14)
         }
         .background(Palette.screen)
+        .task { await viewModel.loadNearbyLots() }
     }
 
     private var header: some View {
@@ -42,7 +45,7 @@ struct CampusFullView: View {
                 Text("Campus is full")
                     .font(.system(size: 18, weight: .bold))
                     .foregroundStyle(Palette.alertRed)
-                Text("All 3 levels at capacity. Verified nearby options below.")
+                Text("No campus spots are available. Nearby alternatives are listed below.")
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(Palette.alertText)
                     .fixedSize(horizontal: false, vertical: true)
@@ -63,43 +66,24 @@ struct CampusFullView: View {
                 .font(.system(size: 30, weight: .bold))
                 .foregroundStyle(Palette.ink)
 
-            VStack(spacing: 14) {
-                NearbyParkingCard(
-                    title: "Parque Central Salitre",
-                    price: "$3.500/hr",
-                    minutes: "4 min",
-                    free: "22 free",
-                    badges: [.closest, .lit, .guarded],
-                    accent: .blue,
-                    isPrimary: true
-                )
-                NearbyParkingCard(
-                    title: "Parking Av. El Dorado",
-                    price: "$2.800/hr",
-                    minutes: "6 min",
-                    free: "8 free",
-                    badges: [.lit],
-                    accent: .gray,
-                    isPrimary: false
-                )
-                NearbyParkingCard(
-                    title: "Zona Azul — Bloque 14",
-                    price: "$2.000/hr",
-                    minutes: "8 min",
-                    free: "3 free",
-                    badges: [],
-                    accent: .gray,
-                    isPrimary: false
-                )
-                NearbyParkingCard(
-                    title: "CC Metropolis P3",
-                    price: "$4.000/hr",
-                    minutes: "11 min",
-                    free: "45 free",
-                    badges: [.lit, .guarded],
-                    accent: .gray,
-                    isPrimary: false
-                )
+            if viewModel.isLoadingNearbyLots {
+                ProgressView()
+                    .frame(maxWidth: .infinity)
+            } else if let errorMessage = viewModel.nearbyLotsErrorMessage {
+                AuthBanner(message: errorMessage, isError: true)
+            } else if viewModel.nearbyLots.isEmpty {
+                Text("No nearby parking options available")
+                    .font(.system(size: 14))
+                    .foregroundStyle(Palette.muted)
+            } else {
+                VStack(spacing: 14) {
+                    ForEach(viewModel.nearbyLots) { lot in
+                        NearbyParkingCard(
+                            lot: lot,
+                            isPrimary: lot.id == viewModel.nearbyLots.first?.id
+                        )
+                    }
+                }
             }
         }
     }
@@ -110,7 +94,7 @@ struct CampusFullView: View {
                 .font(.system(size: 18, weight: .bold))
                 .foregroundStyle(Palette.ink)
             HStack(alignment: .center, spacing: 12) {
-                Text("We'll ping you the moment a spot")
+                Text("Notifications are not available yet.")
                     .font(.system(size: 13))
                     .foregroundStyle(Palette.muted)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -142,88 +126,39 @@ struct CampusFullView: View {
     }
 }
 
-private enum NearbyBadgeType {
-    case closest
-    case lit
-    case guarded
-
-    var label: String {
-        switch self {
-        case .closest: return "CLOSEST"
-        case .lit: return "Lit"
-        case .guarded: return "Guarded"
-        }
-    }
-
-    var tint: Color {
-        switch self {
-        case .closest: return Palette.accentSoft
-        case .lit: return Palette.amberSoft
-        case .guarded: return Palette.violetSoft
-        }
-    }
-
-    var foreground: Color {
-        switch self {
-        case .closest: return Palette.accent
-        case .lit: return Palette.amberText
-        case .guarded: return Palette.violetInk
-        }
-    }
-}
-
 private struct NearbyParkingCard: View {
-    let title: String
-    let price: String
-    let minutes: String
-    let free: String
-    let badges: [NearbyBadgeType]
-    let accent: AccentStyle
+    let lot: NearbyLot
     let isPrimary: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .center) {
-                Text(title)
+                Text(lot.name)
                     .font(.system(size: 18, weight: .bold))
                     .foregroundStyle(Palette.ink)
                 Spacer()
-                Text(price)
+                Text("\(lot.ratePerHour.formatted(.currency(code: lot.currency)))/hr")
                     .font(.system(size: 18, weight: .bold, design: .monospaced))
                     .foregroundStyle(Palette.ink)
             }
 
-            HStack(alignment: .center, spacing: 14) {
-                HStack(spacing: 6) {
-                    Image(systemName: "figure.walk")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(Palette.ink)
-                    Text(minutes)
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(Palette.ink)
-                }
+            HStack(alignment: .center, spacing: 6) {
+                Image(systemName: "mappin.and.ellipse")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(Palette.muted)
+                Text(lot.address)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(Palette.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
 
-                Text(free)
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(Palette.greenInk)
-
-                Spacer()
-
-                if !badges.isEmpty {
-                    HStack(spacing: 8) {
-                        ForEach(badges, id: \.label) { badge in
-                            Text(badge.label)
-                                .font(.system(size: 10, weight: .bold))
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 5)
-                                .foregroundStyle(badge.foreground)
-                                .background(
-                                    Capsule(style: .continuous)
-                                        .fill(badge.tint)
-                                )
-                        }
-                    }
-                }
+            HStack(spacing: 6) {
+                Image(systemName: "figure.walk")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(Palette.ink)
+                Text("\(lot.walkMinutes) min")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(Palette.ink)
             }
 
             HStack(alignment: .center) {
@@ -237,7 +172,7 @@ private struct NearbyParkingCard: View {
                         .frame(minWidth: 120)
                         .background(
                             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .fill(accent == .blue ? Palette.accent : Palette.buttonGray)
+                                .fill(isPrimary ? Palette.accent : Palette.buttonGray)
                         )
                 }
                 .buttonStyle(.plain)
@@ -254,9 +189,4 @@ private struct NearbyParkingCard: View {
                 )
         )
     }
-}
-
-private enum AccentStyle {
-    case blue
-    case gray
 }
