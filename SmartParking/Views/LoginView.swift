@@ -2,6 +2,7 @@ import SwiftUI
 
 struct LoginView: View {
     @EnvironmentObject private var viewModel: AuthViewModel
+    @Environment(\.dismiss) private var dismiss
     @State private var showRegister = false
 
     var body: some View {
@@ -10,7 +11,7 @@ struct LoginView: View {
                 VStack(spacing: 24) {
                     AuthHeader(
                         title: "Welcome back",
-                        subtitle: "Sign in to find and reserve parking on campus."
+                        subtitle: "Sign in to reserve a spot and find your car."
                     )
 
                     VStack(spacing: 16) {
@@ -61,6 +62,15 @@ struct LoginView: View {
             .background(Palette.screen)
             .navigationDestination(isPresented: $showRegister) {
                 RegisterView()
+            }
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Not now") {
+                        viewModel.clearMessages()
+                        dismiss()
+                    }
+                    .foregroundStyle(Palette.accent)
+                }
             }
         }
     }
