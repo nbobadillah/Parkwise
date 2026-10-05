@@ -36,7 +36,7 @@ struct SmartParkingApp: App {
                     ProgressView()
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .background(Palette.screen)
-                } else if authViewModel.isAuthenticated {
+                } else {
                     RootView(
                         parkingService: parkingService,
                         reservationService: reservationService,
@@ -44,20 +44,13 @@ struct SmartParkingApp: App {
                         parkedCarStore: parkedCarStore,
                         networkMonitor: networkMonitor
                     )
-                } else {
-                    LoginView()
                 }
             }
             .environmentObject(authViewModel)
             .task {
                 await authViewModel.restoreSession()
+                TelemetryService.shared.trackAppOpened()
             }
-            .onChange(of: authViewModel.isAuthenticated) { _, isAuthenticated in
-                if isAuthenticated {
-                    TelemetryService.shared.trackAppOpened()
-                }
-            }
-            .animation(.easeInOut, value: authViewModel.isAuthenticated)
         }
     }
 }

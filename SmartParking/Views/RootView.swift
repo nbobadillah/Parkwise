@@ -25,6 +25,7 @@ struct RootView: View {
     @State private var homeRoute: HomeRoute = .dashboard
     @State private var mapRoute: MapRoute = .floor
     @State private var selectedSpot: SpotListing?
+    @State private var showSignIn = false
 
     init(
         parkingService: ParkingServicing,
@@ -103,6 +104,19 @@ struct RootView: View {
             Task {
                 await homeViewModel.loadLevels(isAuthenticated: isAuthenticated)
             }
+        }
+        .task(id: authViewModel.isAuthenticated) {
+            guard authViewModel.isAuthenticated else {
+                reservationViewModel.reset()
+                return
+            }
+            showSignIn = false
+            await reservationViewModel.loadActive()
+            await reservationViewModel.loadHistory()
+        }
+        .sheet(isPresented: $showSignIn) {
+            LoginView()
+                .environmentObject(authViewModel)
         }
         .alert(item: $homeViewModel.locationPermissionPrompt) { prompt in
             switch prompt {
@@ -201,23 +215,47 @@ struct RootView: View {
                     }
                 )
             case .findCar:
-                FindCarView(
-                    viewModel: reservationViewModel,
-                    parkingService: parkingService,
-                    locationService: locationService,
-                    destinationID: homeViewModel.destinationID,
-                    networkMonitor: networkMonitor
-                )
+                if authViewModel.isAuthenticated {
+                    FindCarView(
+                        viewModel: reservationViewModel,
+                        parkingService: parkingService,
+                        locationService: locationService,
+                        destinationID: homeViewModel.destinationID,
+                        networkMonitor: networkMonitor
+                    )
+                } else {
+                    SignInPromptView(
+                        title: "Find your car",
+                        message: "Sign in to see where you parked after checking in.",
+                        icon: "car.fill"
+                    ) { showSignIn = true }
+                }
             }
         case .reserve:
-            ReserveSpotView(
-                selectedSpot: selectedSpot,
-                viewModel: reservationViewModel
-            )
+            if authViewModel.isAuthenticated {
+                ReserveSpotView(
+                    selectedSpot: selectedSpot,
+                    viewModel: reservationViewModel
+                )
+            } else {
+                SignInPromptView(
+                    title: selectedSpot.map { "Reserve \($0.code)" } ?? "Reserve a spot",
+                    message: "Create an account or sign in to hold a spot for 15 minutes.",
+                    icon: "calendar.badge.plus"
+                ) { showSignIn = true }
+            }
         case .profile:
-            ProfileView(
-                reservationViewModel: reservationViewModel
-            )
+            if authViewModel.isAuthenticated {
+                ProfileView(
+                    reservationViewModel: reservationViewModel
+                )
+            } else {
+                SignInPromptView(
+                    title: "Your profile",
+                    message: "Create an account or sign in to see your reservations.",
+                    icon: "person.crop.circle"
+                ) { showSignIn = true }
+            }
         }
     }
 }
@@ -248,4 +286,33 @@ struct PlaceholderView: View {
     }
 }
 
+struct SignInPromptView: View {
+    let title: String
+    let message: String
+    let icon: String
+    let onSignIn: () -> Void
 
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 28, weight: .light))
+                .foregroundStyle(Palette.accent)
+                .frame(width: 64, height: 64)
+                .background(Circle().fill(Palette.accentSoft))
+            Text(title)
+                .font(.system(size: 20, weight: .bold))
+                .foregroundStyle(Palette.ink)
+            Text(message)
+                .font(.system(size: 15))
+                .foregroundStyle(Palette.muted)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 280)
+            PrimaryButton(title: "Sign in or create account", isLoading: false, isEnabled: true, action: onSignIn)
+                .frame(maxWidth: 320)
+                .padding(.top, 12)
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Palette.screen)
+    }
+}

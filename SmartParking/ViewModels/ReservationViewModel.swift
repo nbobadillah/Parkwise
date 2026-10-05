@@ -4,11 +4,13 @@ struct ReservedSpot: Equatable {
     let id: String
     let code: String
     let levelCode: String
+    let zone: String
 
     init(reservation: Reservation) {
         id = reservation.spotId
         code = reservation.spotCode
         levelCode = reservation.levelCode
+        zone = String(reservation.spotCode.prefix { $0 != "-" })
     }
 }
 
@@ -56,10 +58,14 @@ final class ReservationViewModel: ObservableObject {
         self.locationService = locationService
         self.parkedCarStore = parkedCarStore
         parkedCar = parkedCarStore.parkedCar
-        Task {
-            await loadActive()
-            await loadHistory()
-        }
+    }
+
+    func reset() {
+        setActiveReservation(nil)
+        history = []
+        vehicle = nil
+        vehicleErrorMessage = nil
+        error = nil
     }
 
     func loadActive() async {

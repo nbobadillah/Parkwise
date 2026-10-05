@@ -22,7 +22,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.andresmorales.SmartParking
-        API_BASE_URL: http://localhost:3000
+        API_BASE_URL: https://parkwise-api-a1f0.onrender.com
         SWIFT_VERSION: 5.0
         TARGETED_DEVICE_FAMILY: "1"
         CODE_SIGN_STYLE: Automatic
