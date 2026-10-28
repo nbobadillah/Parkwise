@@ -80,5 +80,6 @@ struct RegisterView: View {
         .scrollDismissesKeyboard(.interactively)
         .background(Palette.screen)
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear { viewModel.restoreDraft() }
     }
 }
