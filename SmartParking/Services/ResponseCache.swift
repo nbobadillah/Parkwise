@@ -15,6 +15,7 @@ final class ResponseCache {
     private let directory: URL
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
+    private let queue = DispatchQueue(label: "com.parkwise.response-cache")
 
     init(directory: URL = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0].appending(path: "ParkwiseCache")) {
         self.directory = directory
@@ -23,9 +24,12 @@ final class ResponseCache {
     }
 
     func save<Value: Codable>(_ value: Value, key: String, at date: Date = Date()) {
-        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        guard let data = try? encoder.encode(Entry(savedAt: date, value: value)) else { return }
-        try? data.write(to: fileURL(for: key), options: .atomic)
+        let url = fileURL(for: key)
+        queue.async { [directory, encoder] in
+            try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            guard let data = try? encoder.encode(Entry(savedAt: date, value: value)) else { return }
+            try? data.write(to: url, options: .atomic)
+        }
     }
 
     func load<Value: Codable>(_ type: Value.Type, key: String) -> Fetched<Value>? {

@@ -53,7 +53,7 @@ final class HomeViewModel: ObservableObject {
 
     func loadBuildings() async {
         do {
-            let loadedBuildings = try await service.buildings()
+            let loadedBuildings = try await service.buildings().value
             buildings = loadedBuildings
             if let selectedBuildingID, loadedBuildings.contains(where: { $0.id == selectedBuildingID }) {
                 return
@@ -144,7 +144,7 @@ final class HomeViewModel: ObservableObject {
 
     func loadRecommendation() async {
         do {
-            recommendation = try await service.recommendedLevel(arrivalAt: arrivalAt)
+            recommendation = try await service.recommendedLevel(arrivalAt: arrivalAt).value
         } catch {
             recommendation = nil
         }
@@ -160,7 +160,7 @@ final class HomeViewModel: ObservableObject {
         isLoadingForecast = true
         defer { isLoadingForecast = false }
         do {
-            let response = try await service.predictions(level: levelCode, date: Date())
+            let response = try await service.predictions(level: levelCode, date: Date()).value
             forecastPoints = response.levels.first(where: { $0.code == levelCode })?.points ?? []
             forecastLevelCode = levelCode
         } catch {
@@ -175,7 +175,7 @@ final class HomeViewModel: ObservableObject {
         defer { isLoadingNearbyLots = false }
 
         do {
-            nearbyLots = try await service.nearbyLots()
+            nearbyLots = try await service.nearbyLots().value
         } catch {
             nearbyLotsErrorMessage = error.localizedDescription
         }

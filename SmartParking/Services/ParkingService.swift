@@ -3,10 +3,10 @@ import Foundation
 protocol ParkingServicing: AnyObject {
     func levels(zone: String?) async throws -> Fetched<LevelsResponse>
     func spots(level: String, destination: String?, filters: SpotFilters) async throws -> Fetched<[Spot]>
-    func buildings() async throws -> [Building]
-    func predictions(level: String?, date: Date) async throws -> PredictionsResponse
-    func recommendedLevel(arrivalAt: Date) async throws -> LevelRecommendation
-    func nearbyLots() async throws -> [NearbyLot]
+    func buildings() async throws -> Fetched<[Building]>
+    func predictions(level: String?, date: Date) async throws -> Fetched<PredictionsResponse>
+    func recommendedLevel(arrivalAt: Date) async throws -> Fetched<LevelRecommendation>
+    func nearbyLots() async throws -> Fetched<[NearbyLot]>
 }
 
 final class BackendParkingService: ParkingServicing {
@@ -38,28 +38,37 @@ final class BackendParkingService: ParkingServicing {
         }
     }
 
-    func buildings() async throws -> [Building] {
-        try await client.send("GET", "/api/v1/buildings")
+    func buildings() async throws -> Fetched<[Building]> {
+        try await cached(key: "buildings") {
+            try await self.client.send("GET", "/api/v1/buildings")
+        }
     }
 
-    func predictions(level: String?, date: Date) async throws -> PredictionsResponse {
-        var query = [URLQueryItem(name: "date", value: Self.bogotaDay(date))]
+    func predictions(level: String?, date: Date) async throws -> Fetched<PredictionsResponse> {
+        let day = BogotaClock.day(date)
+        var query = [URLQueryItem(name: "date", value: day)]
         if let level {
             query.append(URLQueryItem(name: "level", value: level))
         }
-        return try await client.send("GET", "/api/v1/predictions", query: query)
+        return try await cached(key: "predictions-\(day)-\(level ?? "all")") {
+            try await self.client.send("GET", "/api/v1/predictions", query: query)
+        }
     }
 
-    func recommendedLevel(arrivalAt: Date) async throws -> LevelRecommendation {
-        try await client.send(
-            "GET",
-            "/api/v1/recommendations/level",
-            query: [URLQueryItem(name: "arrivalAt", value: APIClient.iso8601String(from: arrivalAt))]
-        )
+    func recommendedLevel(arrivalAt: Date) async throws -> Fetched<LevelRecommendation> {
+        try await cached(key: "recommendation-\(BogotaClock.slot(arrivalAt))") {
+            try await self.client.send(
+                "GET",
+                "/api/v1/recommendations/level",
+                query: [URLQueryItem(name: "arrivalAt", value: APIClient.iso8601String(from: arrivalAt))]
+            )
+        }
     }
 
-    func nearbyLots() async throws -> [NearbyLot] {
-        try await client.send("GET", "/api/v1/nearby-lots")
+    func nearbyLots() async throws -> Fetched<[NearbyLot]> {
+        try await cached(key: "nearby-lots") {
+            try await self.client.send("GET", "/api/v1/nearby-lots")
+        }
     }
 
     private func cached<Value: Codable>(key: String, request: () async throws -> Value) async throws -> Fetched<Value> {
@@ -73,11 +82,25 @@ final class BackendParkingService: ParkingServicing {
             return copy
         }
     }
+}
 
-    private static func bogotaDay(_ date: Date) -> String {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: "America/Bogota") ?? .current
+enum BogotaClock {
+    static let slotMinutes = 15
+
+    static func day(_ date: Date) -> String {
         let parts = calendar.dateComponents([.year, .month, .day], from: date)
         return String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
+    }
+
+    static func slot(_ date: Date) -> String {
+        let parts = calendar.dateComponents([.hour, .minute], from: date)
+        let minute = parts.minute ?? 0
+        return String(format: "%02d:%02d", parts.hour ?? 0, minute - minute % slotMinutes)
+    }
+
+    private static var calendar: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "America/Bogota") ?? .current
+        return calendar
     }
 }
