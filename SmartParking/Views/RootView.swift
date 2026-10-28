@@ -52,16 +52,6 @@ struct RootView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if !networkMonitor.isConnected {
-                AuthBanner(
-                    message: "No internet connection. Cached data will be used when available.",
-                    isError: true
-                )
-                .padding(.horizontal, 12)
-                .padding(.top, 8)
-                .padding(.bottom, 4)
-            }
-
             content
             AppTabBar(selection: tabSelection)
         }
