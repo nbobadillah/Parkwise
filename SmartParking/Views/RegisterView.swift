@@ -47,6 +47,10 @@ struct RegisterView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
+                if let message = viewModel.offlineMessage {
+                    AuthBanner(message: message, isError: true)
+                }
+
                 if let message = viewModel.errorMessage {
                     AuthBanner(message: message, isError: true)
                 }

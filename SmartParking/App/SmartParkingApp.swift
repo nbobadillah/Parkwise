@@ -25,7 +25,7 @@ struct SmartParkingApp: App {
         self.networkMonitor = networkMonitor
 
         _authViewModel = StateObject(
-            wrappedValue: AuthViewModel(service: authService)
+            wrappedValue: AuthViewModel(service: authService, networkMonitor: networkMonitor)
         )
     }
 

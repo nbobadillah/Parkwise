@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 
 @MainActor
@@ -6,6 +7,7 @@ final class AuthViewModel: ObservableObject {
     @Published private(set) var isLoading = false
     @Published private(set) var isRestoring = true
     @Published var errorMessage: String?
+    @Published private(set) var isConnected = true
 
     @Published var name = ""
     @Published var email = ""
@@ -15,8 +17,10 @@ final class AuthViewModel: ObservableObject {
     private let service: AuthServicing
     private var sessionExpiredObserver: NSObjectProtocol?
 
-    init(service: AuthServicing) {
+    init(service: AuthServicing, networkMonitor: NetworkMonitor = .shared) {
         self.service = service
+        isConnected = networkMonitor.isConnected
+        networkMonitor.$isConnected.assign(to: &$isConnected)
         sessionExpiredObserver = NotificationCenter.default.addObserver(
             forName: .sessionExpired,
             object: nil,
@@ -37,7 +41,7 @@ final class AuthViewModel: ObservableObject {
     var isAuthenticated: Bool { user != nil }
 
     var canSignIn: Bool {
-        isValidEmail(trimmedEmail) && !password.isEmpty && !isLoading
+        isValidEmail(trimmedEmail) && !password.isEmpty && !isLoading && isConnected
     }
 
     var canRegister: Bool {
@@ -46,6 +50,11 @@ final class AuthViewModel: ObservableObject {
             && password.count >= 6
             && password == confirmPassword
             && !isLoading
+            && isConnected
+    }
+
+    var offlineMessage: String? {
+        isConnected ? nil : "Signing in needs a connection. You can keep browsing with 'Not now'."
     }
 
     var passwordMismatch: Bool {
