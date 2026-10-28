@@ -16,6 +16,7 @@ struct RootView: View {
     @ObservedObject private var locationService: LocationService
     @ObservedObject private var networkMonitor: NetworkMonitor
     @ObservedObject private var campusAlerts = CampusAlertService.shared
+    @ObservedObject private var serverStatus = ServerStatus.shared
     let parkingService: ParkingServicing
     let reservationService: ReservationServicing
 
@@ -53,6 +54,25 @@ struct RootView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            if serverStatus.isWaking {
+                HStack(spacing: 10) {
+                    ProgressView()
+                        .tint(Palette.accent)
+                    Text("Waking up the server. This can take up to a minute.")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(Palette.accent)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Palette.accentSoft)
+                )
+                .padding(.horizontal, 12)
+                .padding(.top, 8)
+                .padding(.bottom, 4)
+            }
+
             content
             AppTabBar(selection: tabSelection)
         }
