@@ -27,7 +27,7 @@ final class ParkingMapViewModel: ObservableObject {
         return zones.lazy.flatMap(\.rows).flatMap(\.spots).first { $0.id == selectedSpotID }
     }
 
-    func run(levelCode: String) async {
+    func run(levelCode: String, isConnected: Bool) async {
         zones = []
         selectedSpotID = nil
 
@@ -35,6 +35,8 @@ final class ParkingMapViewModel: ObservableObject {
         let errorType = await refresh(levelCode: levelCode)
         guard !Task.isCancelled else { return }
         telemetry.trackMapLoaded(levelCode: levelCode, durationMs: Self.milliseconds(since: start), errorType: errorType)
+
+        guard isConnected else { return }
 
         while !Task.isCancelled {
             try? await Task.sleep(for: Self.refreshInterval)

@@ -6,6 +6,7 @@ struct ParkingMapView: View {
     let destinationID: String?
     let onReserve: (ParkingSpot) -> Void
 
+    @ObservedObject private var networkMonitor: NetworkMonitor
     @StateObject private var viewModel: ParkingMapViewModel
 
     init(
@@ -13,12 +14,14 @@ struct ParkingMapView: View {
         levels: [LevelSummary],
         destinationID: String?,
         service: ParkingServicing,
+        networkMonitor: NetworkMonitor,
         onReserve: @escaping (ParkingSpot) -> Void
     ) {
         _levelCode = levelCode
         self.levels = levels
         self.destinationID = destinationID
         self.onReserve = onReserve
+        _networkMonitor = ObservedObject(wrappedValue: networkMonitor)
         _viewModel = StateObject(wrappedValue: ParkingMapViewModel(service: service, destination: destinationID))
     }
 
@@ -48,9 +51,9 @@ struct ParkingMapView: View {
         }
         .background(Palette.screen)
         .animation(.easeOut(duration: 0.22), value: viewModel.selectedSpotID)
-        .task(id: levelCode + (destinationID ?? "")) {
+        .task(id: "\(levelCode)|\(destinationID ?? "")|\(networkMonitor.isConnected)") {
             viewModel.destination = destinationID
-            await viewModel.run(levelCode: levelCode)
+            await viewModel.run(levelCode: levelCode, isConnected: networkMonitor.isConnected)
         }
     }
 
@@ -62,6 +65,9 @@ struct ParkingMapView: View {
                     Text(levels.first { $0.code == levelCode }?.shortTitle ?? levelCode)
                         .font(.system(size: 25, weight: .bold))
                         .foregroundStyle(Palette.ink)
+                    if viewModel.fromCache, let fetchedAt = viewModel.fetchedAt {
+                        SavedPill(savedAt: fetchedAt)
+                    }
                 }
                 Spacer()
                 HStack(spacing: 8) {

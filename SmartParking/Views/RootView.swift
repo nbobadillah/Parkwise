@@ -209,6 +209,7 @@ struct RootView: View {
                     levels: homeViewModel.levels,
                     destinationID: homeViewModel.destinationID,
                     service: parkingService,
+                    networkMonitor: networkMonitor,
                     onReserve: { spot in
                         selectedSpot = SpotListing(spot: spot)
                         tab = .reserve
