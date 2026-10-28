@@ -52,16 +52,6 @@ struct RootView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if !networkMonitor.isConnected {
-                AuthBanner(
-                    message: "No internet connection. Cached data will be used when available.",
-                    isError: true
-                )
-                .padding(.horizontal, 12)
-                .padding(.top, 8)
-                .padding(.bottom, 4)
-            }
-
             content
             AppTabBar(selection: tabSelection)
         }
@@ -209,6 +199,7 @@ struct RootView: View {
                     levels: homeViewModel.levels,
                     destinationID: homeViewModel.destinationID,
                     service: parkingService,
+                    networkMonitor: networkMonitor,
                     onReserve: { spot in
                         selectedSpot = SpotListing(spot: spot)
                         tab = .reserve

@@ -18,8 +18,9 @@ final class HomeViewModel: ObservableObject {
     @Published private(set) var fetchedAt: Date?
     @Published private(set) var fromCache = false
     @Published private(set) var recommendation: LevelRecommendation?
-    @Published private(set) var forecastPoints: [PredictionPoint] = []
-    @Published private(set) var forecastLevelCode: String?
+    @Published private(set) var recommendationFetchedAt: Date?
+    @Published private(set) var recommendationFromCache = false
+    @Published private(set) var forecast: PredictionsResponse?
     @Published private(set) var isLoadingForecast = false
     @Published private(set) var nearbyLots: [NearbyLot] = []
     @Published private(set) var isLoadingNearbyLots = false
@@ -31,19 +32,31 @@ final class HomeViewModel: ObservableObject {
 
     private let service: ParkingServicing
     private let locationService: LocationServicing
+    private let telemetry: TelemetryService
     private let defaults: UserDefaults
     private let selectedBuildingKey = "selectedBuildingID"
     private var lastLoadedZone: String?
+    private var lastViewedSlot: String?
 
     init(
         service: ParkingServicing,
         locationService: LocationServicing = LocationService.shared,
+        telemetry: TelemetryService? = nil,
         defaults: UserDefaults = .standard
     ) {
         self.service = service
         self.locationService = locationService
+        self.telemetry = telemetry ?? .shared
         self.defaults = defaults
         selectedBuildingID = defaults.string(forKey: selectedBuildingKey)
+    }
+
+    var forecastLevelCode: String? {
+        recommendation?.recommended ?? forecast?.levels.first?.code
+    }
+
+    var forecastPoints: [PredictionPoint] {
+        forecast?.levels.first { $0.code == forecastLevelCode }?.points ?? []
     }
 
     var destinationID: String? {
@@ -53,7 +66,7 @@ final class HomeViewModel: ObservableObject {
 
     func loadBuildings() async {
         do {
-            let loadedBuildings = try await service.buildings()
+            let loadedBuildings = try await service.buildings().value
             buildings = loadedBuildings
             if let selectedBuildingID, loadedBuildings.contains(where: { $0.id == selectedBuildingID }) {
                 return
@@ -142,31 +155,69 @@ final class HomeViewModel: ObservableObject {
         }
     }
 
-    func loadRecommendation() async {
-        do {
-            recommendation = try await service.recommendedLevel(arrivalAt: arrivalAt)
-        } catch {
-            recommendation = nil
+    func loadArrivalData() async {
+        async let recommendationLoad: Void = loadRecommendation()
+        async let forecastLoad: Void = loadForecast()
+        _ = await (recommendationLoad, forecastLoad)
+    }
+
+    func prefetchLevels() async {
+        let service = service
+        let destination = destinationID
+        await withTaskGroup(of: Void.self) { group in
+            for levelCode in ["P1", "P2", "P3"] {
+                group.addTask {
+                    _ = try? await service.spots(level: levelCode, destination: destination, filters: SpotFilters())
+                }
+            }
         }
     }
 
-    func loadForecast() async {
-        guard let levelCode = recommendation?.recommended else {
-            forecastPoints = []
-            forecastLevelCode = nil
-            return
+    func loadRecommendation() async {
+        let loaded: Fetched<LevelRecommendation>
+        do {
+            loaded = try await service.recommendedLevel(arrivalAt: arrivalAt)
+        } catch {
+            guard let local = await localRecommendation() else {
+                recommendation = nil
+                recommendationFetchedAt = nil
+                recommendationFromCache = false
+                return
+            }
+            loaded = local
         }
+        recommendation = loaded.value
+        recommendationFetchedAt = loaded.fetchedAt
+        recommendationFromCache = loaded.fromCache
+        trackForecastViewed(slot: loaded.value.slot)
+    }
 
+    private func localRecommendation() async -> Fetched<LevelRecommendation>? {
+        guard let forecast = try? await service.predictions(level: nil, date: arrivalAt) else { return nil }
+        let slot = BogotaClock.slot(arrivalAt)
+        let levels = forecast.value.levels.map { level in
+            LevelOccupancy(code: level.code, predictedOccupancy: level.points.first { $0.slot == slot }?.occupancy)
+        }
+        let recommended = levels
+            .compactMap { level in level.predictedOccupancy.map { (level.code, $0) } }
+            .min { $0.1 < $1.1 }?
+            .0
+        guard recommended != nil else { return nil }
+        let recommendation = LevelRecommendation(arrivalAt: arrivalAt, slot: slot, recommended: recommended, levels: levels)
+        return Fetched(value: recommendation, fetchedAt: forecast.fetchedAt, fromCache: true)
+    }
+
+    private func trackForecastViewed(slot: String) {
+        guard slot != lastViewedSlot else { return }
+        let source = lastViewedSlot == nil ? "home_open" : "arrival_change"
+        lastViewedSlot = slot
+        telemetry.trackForecastViewed(screen: "home", arrivalSlot: slot, source: source)
+    }
+
+    func loadForecast() async {
         isLoadingForecast = true
         defer { isLoadingForecast = false }
-        do {
-            let response = try await service.predictions(level: levelCode, date: Date())
-            forecastPoints = response.levels.first(where: { $0.code == levelCode })?.points ?? []
-            forecastLevelCode = levelCode
-        } catch {
-            forecastPoints = []
-            forecastLevelCode = levelCode
-        }
+        forecast = try? await service.predictions(level: nil, date: arrivalAt).value
     }
 
     func loadNearbyLots() async {
@@ -175,7 +226,7 @@ final class HomeViewModel: ObservableObject {
         defer { isLoadingNearbyLots = false }
 
         do {
-            nearbyLots = try await service.nearbyLots()
+            nearbyLots = try await service.nearbyLots().value
         } catch {
             nearbyLotsErrorMessage = error.localizedDescription
         }

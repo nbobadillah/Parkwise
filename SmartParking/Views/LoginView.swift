@@ -31,6 +31,10 @@ struct LoginView: View {
                         )
                     }
 
+                    if let message = viewModel.offlineMessage {
+                        AuthBanner(message: message, isError: true)
+                    }
+
                     if let message = viewModel.errorMessage {
                         AuthBanner(message: message, isError: true)
                     }

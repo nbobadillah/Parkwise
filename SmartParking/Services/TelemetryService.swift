@@ -79,6 +79,15 @@ final class TelemetryService {
         ])
     }
 
+    func trackForecastViewed(screen: String, arrivalSlot: String, source: String) {
+        track("forecast_viewed", [
+            "platform": .string("ios"),
+            "screen": .string(screen),
+            "arrivalSlot": .string(arrivalSlot),
+            "source": .string(source)
+        ])
+    }
+
     func trackAppOpened() {
         track("app_opened", ["platform": .string("ios")])
     }

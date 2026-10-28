@@ -26,11 +26,13 @@ struct HomeView: View {
             .padding(.bottom, 26)
         }
         .background(Palette.screen)
-        .task { await viewModel.loadBuildings() }
-        .task(id: viewModel.arrivalAt) {
-            await viewModel.loadRecommendation()
-            await viewModel.loadForecast()
+        .task {
+            await viewModel.loadBuildings()
+            if NetworkMonitor.shared.isConnected {
+                await viewModel.prefetchLevels()
+            }
         }
+        .task(id: viewModel.arrivalAt) { await viewModel.loadArrivalData() }
     }
 
     private var header: some View {
@@ -71,7 +73,11 @@ struct HomeView: View {
     private var recommendation: some View {
         VStack(alignment: .leading, spacing: 12) {
             SectionLabel(text: "Recommended level")
-            RecommendationCard(recommendation: viewModel.recommendation, arrivalAt: $viewModel.arrivalAt)
+            RecommendationCard(
+                recommendation: viewModel.recommendation,
+                savedAt: viewModel.recommendationFromCache ? viewModel.recommendationFetchedAt : nil,
+                arrivalAt: $viewModel.arrivalAt
+            )
         }
     }
 
