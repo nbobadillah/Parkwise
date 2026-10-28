@@ -15,6 +15,7 @@ struct RootView: View {
     @EnvironmentObject private var authViewModel: AuthViewModel
     @ObservedObject private var locationService: LocationService
     @ObservedObject private var networkMonitor: NetworkMonitor
+    @ObservedObject private var campusAlerts = CampusAlertService.shared
     let parkingService: ParkingServicing
     let reservationService: ReservationServicing
 
@@ -61,6 +62,9 @@ struct RootView: View {
                 homeViewModel.prepareLocationPermission()
             }
             await homeViewModel.loadLevels(isAuthenticated: authViewModel.isAuthenticated)
+        }
+        .onChange(of: homeViewModel.campusFull) { _, full in
+            campusAlerts.campusDidChange(full: full)
         }
         .onChange(of: networkMonitor.isConnected) { _, isConnected in
             guard isConnected else { return }
@@ -162,7 +166,7 @@ struct RootView: View {
         switch tab {
         case .home:
             if homeViewModel.campusFull {
-                CampusFullView(viewModel: homeViewModel)
+                CampusFullView(viewModel: homeViewModel, alerts: campusAlerts)
             } else {
                 switch homeRoute {
                 case .dashboard:
