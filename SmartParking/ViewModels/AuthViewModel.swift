@@ -9,6 +9,8 @@ final class AuthViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published private(set) var isConnected = true
 
+    @Published private(set) var nameError: String?
+
     @Published var name = "" {
         didSet { saveDraft(name, forKey: Self.draftNameKey) }
     }
@@ -25,12 +27,11 @@ final class AuthViewModel: ObservableObject {
     private let defaults: UserDefaults
     private var sessionExpiredObserver: NSObjectProtocol?
     private var isClearingForm = false
+    private var nameRevertedTo: String?
 
     init(service: AuthServicing, networkMonitor: NetworkMonitor = .shared, defaults: UserDefaults = .standard) {
         self.service = service
         self.defaults = defaults
-        name = defaults.string(forKey: Self.draftNameKey) ?? ""
-        email = defaults.string(forKey: Self.draftEmailKey) ?? ""
         isConnected = networkMonitor.isConnected
         networkMonitor.$isConnected.assign(to: &$isConnected)
         sessionExpiredObserver = NotificationCenter.default.addObserver(
@@ -53,16 +54,49 @@ final class AuthViewModel: ObservableObject {
     var isAuthenticated: Bool { user != nil }
 
     var canSignIn: Bool {
-        isValidEmail(trimmedEmail) && !password.isEmpty && !isLoading && isConnected
+        AuthValidation.isValidEmailFormat(trimmedEmail) && !password.isEmpty && !isLoading && isConnected
     }
 
     var canRegister: Bool {
-        !trimmedName.isEmpty
-            && isValidEmail(trimmedEmail)
-            && password.count >= 6
+        AuthValidation.isValidName(trimmedName)
+            && AuthValidation.isValidEmailFormat(trimmedEmail)
+            && AuthValidation.isRealProvider(trimmedEmail)
+            && AuthValidation.isStrongPassword(password)
             && password == confirmPassword
             && !isLoading
             && isConnected
+    }
+
+    func acceptName(_ new: String, previous: String) -> String {
+        if new == nameRevertedTo {
+            nameRevertedTo = nil
+            return new
+        }
+        if new.count > AuthValidation.maxNameLength {
+            let limited = String(new.prefix(AuthValidation.maxNameLength))
+            nameError = AuthValidation.nameRejection(new)
+            nameRevertedTo = AuthValidation.nameRejection(limited) == nil ? limited : previous
+            return nameRevertedTo ?? previous
+        }
+        if let rejection = AuthValidation.nameRejection(new) {
+            nameError = rejection
+            nameRevertedTo = previous
+            return previous
+        }
+        nameError = nil
+        return new
+    }
+
+    var registerEmailError: String? {
+        AuthValidation.emailError(trimmedEmail)
+    }
+
+    var emailSuggestions: [String] {
+        AuthValidation.emailSuggestions(trimmedEmail)
+    }
+
+    var passwordRules: [PasswordRule] {
+        AuthValidation.passwordRules(password)
     }
 
     var offlineMessage: String? {
@@ -94,6 +128,13 @@ final class AuthViewModel: ObservableObject {
         }
     }
 
+    func discardRegisterForm() {
+        clearForm()
+        clearDraft()
+        clearMessages()
+        nameRevertedTo = nil
+    }
+
     func restoreDraft() {
         if name.isEmpty {
             name = defaults.string(forKey: Self.draftNameKey) ?? ""
@@ -116,6 +157,7 @@ final class AuthViewModel: ObservableObject {
 
     func clearMessages() {
         errorMessage = nil
+        nameError = nil
     }
 
     private var trimmedName: String {
@@ -124,10 +166,6 @@ final class AuthViewModel: ObservableObject {
 
     private var trimmedEmail: String {
         email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-    }
-
-    private func isValidEmail(_ value: String) -> Bool {
-        value.range(of: #"^[^@\s]+@[^@\s]+\.[^@\s]+$"#, options: .regularExpression) != nil
     }
 
     private func clearForm() {

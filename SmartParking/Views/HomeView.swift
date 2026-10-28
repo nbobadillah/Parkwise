@@ -38,7 +38,7 @@ struct HomeView: View {
     private var header: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Good morning")
+                Text(greeting)
                     .font(.system(size: 15))
                     .foregroundStyle(Palette.muted)
                 Text(authViewModel.user?.displayName ?? "Guest")
@@ -51,6 +51,14 @@ struct HomeView: View {
                 .foregroundStyle(.white)
                 .frame(width: 46, height: 46)
                 .background(Circle().fill(Palette.accent))
+        }
+    }
+
+    private var greeting: String {
+        switch Calendar.current.component(.hour, from: Date()) {
+        case 5..<12: return "Good morning"
+        case 12..<18: return "Good afternoon"
+        default: return "Good evening"
         }
     }
 

@@ -21,20 +21,21 @@ struct SpotCell: View {
     }
 
     private var content: some View {
-        Group {
-            if isSelected {
-                Text(spot.code)
-                    .font(.system(size: 12, weight: .bold, design: .monospaced))
-                    .foregroundStyle(.white)
-            } else if spot.state == .free {
-                Circle()
-                    .fill(Palette.greenInk)
-                    .frame(width: 6, height: 6)
-            } else if spot.state == .you {
-                Circle()
-                    .fill(Palette.accent)
-                    .frame(width: 7, height: 7)
-            }
+        Text(spot.code)
+            .font(.system(size: 11, weight: .bold, design: .monospaced))
+            .foregroundStyle(textColor)
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
+            .padding(.horizontal, 2)
+    }
+
+    private var textColor: Color {
+        if isSelected { return .white }
+        switch spot.state {
+        case .free: return Palette.greenInk
+        case .taken: return Palette.muted
+        case .reserved: return Palette.amberInk
+        case .you: return Palette.accent
         }
     }
 

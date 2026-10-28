@@ -33,6 +33,7 @@ struct AuthField: View {
     var keyboard: UIKeyboardType = .default
     var contentType: UITextContentType?
     var hasError = false
+    var sanitize: ((_ old: String, _ new: String) -> String)?
 
     @State private var isRevealed = false
 
@@ -72,6 +73,13 @@ struct AuthField: View {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .stroke(hasError ? Palette.redInk : Palette.line, lineWidth: hasError ? 1.6 : 1)
             )
+        }
+        .onChange(of: text) { old, new in
+            guard let sanitize else { return }
+            let accepted = sanitize(old, new)
+            if accepted != new {
+                text = accepted
+            }
         }
     }
 

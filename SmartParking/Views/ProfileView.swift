@@ -3,6 +3,7 @@ import SwiftUI
 struct ProfileView: View {
     @EnvironmentObject private var viewModel: AuthViewModel
     @ObservedObject var reservationViewModel: ReservationViewModel
+    @State private var isConfirmingSignOut = false
 
     var body: some View {
         ScrollView {
@@ -33,7 +34,7 @@ struct ProfileView: View {
                 }
 
                 Button(role: .destructive) {
-                    viewModel.signOut()
+                    isConfirmingSignOut = true
                 } label: {
                     Label("Sign out", systemImage: "rectangle.portrait.and.arrow.right")
                         .font(.system(size: 16, weight: .semibold))
@@ -46,6 +47,14 @@ struct ProfileView: View {
                         )
                 }
                 .buttonStyle(.plain)
+                .confirmationDialog("Sign out of Parkwise?", isPresented: $isConfirmingSignOut, titleVisibility: .visible) {
+                    Button("Sign out", role: .destructive) {
+                        viewModel.signOut()
+                    }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("You can keep browsing as a guest and sign in again anytime.")
+                }
             }
             .padding(24)
         }

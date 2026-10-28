@@ -1,7 +1,9 @@
 import SwiftUI
 
 struct CampusFullView: View {
+    @EnvironmentObject private var authViewModel: AuthViewModel
     @ObservedObject var viewModel: HomeViewModel
+    @ObservedObject var alerts: CampusAlertService
 
     var body: some View {
         ScrollView {
@@ -17,6 +19,14 @@ struct CampusFullView: View {
         }
         .background(Palette.screen)
         .task { await viewModel.loadNearbyLots() }
+        .task(id: alerts.state) {
+            guard alerts.state == .watching else { return }
+            while !Task.isCancelled {
+                try? await Task.sleep(for: CampusAlertService.pollInterval)
+                guard !Task.isCancelled else { return }
+                await viewModel.loadLevels(isAuthenticated: authViewModel.isAuthenticated)
+            }
+        }
     }
 
     private var header: some View {
@@ -94,20 +104,21 @@ struct CampusFullView: View {
                 .font(.system(size: 18, weight: .bold))
                 .foregroundStyle(Palette.ink)
             HStack(alignment: .center, spacing: 12) {
-                Text("Notifications are not available yet.")
+                Text(notifyMessage)
                     .font(.system(size: 13))
                     .foregroundStyle(Palette.muted)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                Button { } label: {
-                    Text("Notify me")
+                    .fixedSize(horizontal: false, vertical: true)
+                Button(action: notifyAction) {
+                    Text(notifyButtonTitle)
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(alerts.state == .watching ? Palette.ink : .white)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 12)
                         .frame(minWidth: 104)
                         .background(
                             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .fill(Palette.purple)
+                                .fill(alerts.state == .watching ? Palette.buttonGray : Palette.purple)
                         )
                 }
                 .buttonStyle(.plain)
@@ -124,9 +135,39 @@ struct CampusFullView: View {
                 )
         )
     }
+
+    private var notifyMessage: String {
+        switch alerts.state {
+        case .off: return "Get an alert as soon as a spot frees up while Parkwise is open."
+        case .watching: return "Checking every 30 seconds. We'll notify you when a spot opens up."
+        case .denied: return "Notifications are off for Parkwise. Turn them on in Settings."
+        }
+    }
+
+    private var notifyButtonTitle: String {
+        switch alerts.state {
+        case .off: return "Notify me"
+        case .watching: return "Cancel"
+        case .denied: return "Settings"
+        }
+    }
+
+    private func notifyAction() {
+        switch alerts.state {
+        case .off:
+            Task { await alerts.enable() }
+        case .watching:
+            alerts.cancel()
+        case .denied:
+            if let url = URL(string: UIApplication.openSettingsURLString) {
+                UIApplication.shared.open(url)
+            }
+        }
+    }
 }
 
 private struct NearbyParkingCard: View {
+    @Environment(\.openURL) private var openURL
     let lot: NearbyLot
     let isPrimary: Bool
 
@@ -163,7 +204,7 @@ private struct NearbyParkingCard: View {
 
             HStack(alignment: .center) {
                 Spacer()
-                Button { } label: {
+                Button(action: navigate) {
                     Text("Navigate")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(.white)
@@ -188,5 +229,16 @@ private struct NearbyParkingCard: View {
                         .stroke(isPrimary ? Palette.accent : Palette.line, lineWidth: isPrimary ? 1.8 : 1)
                 )
         )
+    }
+
+    private func navigate() {
+        var components = URLComponents(string: "https://maps.apple.com/")
+        components?.queryItems = [
+            URLQueryItem(name: "daddr", value: "\(lot.name), \(lot.address), Bogotá"),
+            URLQueryItem(name: "dirflg", value: "d")
+        ]
+        if let url = components?.url {
+            openURL(url)
+        }
     }
 }
