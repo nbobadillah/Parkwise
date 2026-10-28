@@ -20,14 +20,16 @@ struct LoginView: View {
                             icon: "envelope",
                             text: $viewModel.email,
                             keyboard: .emailAddress,
-                            contentType: .emailAddress
+                            contentType: .emailAddress,
+                            sanitize: { _, new in AuthValidation.cleanEmail(new) }
                         )
                         AuthField(
                             title: "Password",
                             icon: "lock",
                             text: $viewModel.password,
                             isSecure: true,
-                            contentType: .password
+                            contentType: .password,
+                            sanitize: { _, new in AuthValidation.cleanPassword(new) }
                         )
                     }
 
