@@ -71,7 +71,11 @@ struct HomeView: View {
     private var recommendation: some View {
         VStack(alignment: .leading, spacing: 12) {
             SectionLabel(text: "Recommended level")
-            RecommendationCard(recommendation: viewModel.recommendation, arrivalAt: $viewModel.arrivalAt)
+            RecommendationCard(
+                recommendation: viewModel.recommendation,
+                savedAt: viewModel.recommendationFromCache ? viewModel.recommendationFetchedAt : nil,
+                arrivalAt: $viewModel.arrivalAt
+            )
         }
     }
 

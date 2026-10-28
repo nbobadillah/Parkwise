@@ -16,6 +16,22 @@ struct StatusPill: View {
     }
 }
 
+struct SavedPill: View {
+    let savedAt: Date
+
+    var body: some View {
+        Label("Guardado \(savedAt.formatted(.dateTime.hour(.twoDigits(amPM: .omitted)).minute(.twoDigits)))", systemImage: "clock.arrow.circlepath")
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(Palette.amberInk)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(Palette.amberSoft)
+            )
+    }
+}
+
 struct ChoiceChip: View {
     let title: String
     let isSelected: Bool

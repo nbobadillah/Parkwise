@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RecommendationCard: View {
     let recommendation: LevelRecommendation?
+    let savedAt: Date?
     @Binding var arrivalAt: Date
 
     var body: some View {
@@ -14,6 +15,9 @@ struct RecommendationCard: View {
                     Text(subtitle)
                         .font(.system(size: 13))
                         .foregroundStyle(Palette.muted)
+                    if let savedAt {
+                        SavedPill(savedAt: savedAt)
+                    }
                 }
 
                 Spacer(minLength: 4)

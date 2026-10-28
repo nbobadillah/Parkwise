@@ -18,6 +18,8 @@ final class HomeViewModel: ObservableObject {
     @Published private(set) var fetchedAt: Date?
     @Published private(set) var fromCache = false
     @Published private(set) var recommendation: LevelRecommendation?
+    @Published private(set) var recommendationFetchedAt: Date?
+    @Published private(set) var recommendationFromCache = false
     @Published private(set) var forecastPoints: [PredictionPoint] = []
     @Published private(set) var forecastLevelCode: String?
     @Published private(set) var isLoadingForecast = false
@@ -147,13 +149,37 @@ final class HomeViewModel: ObservableObject {
     }
 
     func loadRecommendation() async {
+        let loaded: Fetched<LevelRecommendation>
         do {
-            let loaded = try await service.recommendedLevel(arrivalAt: arrivalAt).value
-            recommendation = loaded
-            trackForecastViewed(slot: loaded.slot)
+            loaded = try await service.recommendedLevel(arrivalAt: arrivalAt)
         } catch {
-            recommendation = nil
+            guard let local = await localRecommendation() else {
+                recommendation = nil
+                recommendationFetchedAt = nil
+                recommendationFromCache = false
+                return
+            }
+            loaded = local
         }
+        recommendation = loaded.value
+        recommendationFetchedAt = loaded.fetchedAt
+        recommendationFromCache = loaded.fromCache
+        trackForecastViewed(slot: loaded.value.slot)
+    }
+
+    private func localRecommendation() async -> Fetched<LevelRecommendation>? {
+        guard let forecast = try? await service.predictions(level: nil, date: arrivalAt) else { return nil }
+        let slot = BogotaClock.slot(arrivalAt)
+        let levels = forecast.value.levels.map { level in
+            LevelOccupancy(code: level.code, predictedOccupancy: level.points.first { $0.slot == slot }?.occupancy)
+        }
+        let recommended = levels
+            .compactMap { level in level.predictedOccupancy.map { (level.code, $0) } }
+            .min { $0.1 < $1.1 }?
+            .0
+        guard recommended != nil else { return nil }
+        let recommendation = LevelRecommendation(arrivalAt: arrivalAt, slot: slot, recommended: recommended, levels: levels)
+        return Fetched(value: recommendation, fetchedAt: forecast.fetchedAt, fromCache: true)
     }
 
     private func trackForecastViewed(slot: String) {
@@ -173,7 +199,7 @@ final class HomeViewModel: ObservableObject {
         isLoadingForecast = true
         defer { isLoadingForecast = false }
         do {
-            let response = try await service.predictions(level: levelCode, date: Date()).value
+            let response = try await service.predictions(level: nil, date: arrivalAt).value
             forecastPoints = response.levels.first(where: { $0.code == levelCode })?.points ?? []
             forecastLevelCode = levelCode
         } catch {
