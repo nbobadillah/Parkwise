@@ -19,7 +19,7 @@ enum AuthServiceError: LocalizedError {
         switch self {
         case .invalidCredentials: return "Incorrect email or password."
         case .emailAlreadyInUse: return "An account with this email already exists."
-        case .invalidInput: return "Check the email and use a password with at least 6 characters."
+        case .invalidInput: return "Check your details: use a real email and a password with 8 or more characters, an uppercase letter, a lowercase letter, a number and a symbol."
         case .network: return "Could not reach the Parkwise server. Check your connection."
         case .unknown(let message): return message
         }
