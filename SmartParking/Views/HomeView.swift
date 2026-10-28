@@ -26,11 +26,13 @@ struct HomeView: View {
             .padding(.bottom, 26)
         }
         .background(Palette.screen)
-        .task { await viewModel.loadBuildings() }
-        .task(id: viewModel.arrivalAt) {
-            await viewModel.loadRecommendation()
-            await viewModel.loadForecast()
+        .task {
+            await viewModel.loadBuildings()
+            if NetworkMonitor.shared.isConnected {
+                await viewModel.prefetchLevels()
+            }
         }
+        .task(id: viewModel.arrivalAt) { await viewModel.loadArrivalData() }
     }
 
     private var header: some View {

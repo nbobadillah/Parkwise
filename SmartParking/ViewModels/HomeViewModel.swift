@@ -20,8 +20,7 @@ final class HomeViewModel: ObservableObject {
     @Published private(set) var recommendation: LevelRecommendation?
     @Published private(set) var recommendationFetchedAt: Date?
     @Published private(set) var recommendationFromCache = false
-    @Published private(set) var forecastPoints: [PredictionPoint] = []
-    @Published private(set) var forecastLevelCode: String?
+    @Published private(set) var forecast: PredictionsResponse?
     @Published private(set) var isLoadingForecast = false
     @Published private(set) var nearbyLots: [NearbyLot] = []
     @Published private(set) var isLoadingNearbyLots = false
@@ -50,6 +49,14 @@ final class HomeViewModel: ObservableObject {
         self.telemetry = telemetry ?? .shared
         self.defaults = defaults
         selectedBuildingID = defaults.string(forKey: selectedBuildingKey)
+    }
+
+    var forecastLevelCode: String? {
+        recommendation?.recommended ?? forecast?.levels.first?.code
+    }
+
+    var forecastPoints: [PredictionPoint] {
+        forecast?.levels.first { $0.code == forecastLevelCode }?.points ?? []
     }
 
     var destinationID: String? {
@@ -148,6 +155,24 @@ final class HomeViewModel: ObservableObject {
         }
     }
 
+    func loadArrivalData() async {
+        async let recommendationLoad: Void = loadRecommendation()
+        async let forecastLoad: Void = loadForecast()
+        _ = await (recommendationLoad, forecastLoad)
+    }
+
+    func prefetchLevels() async {
+        let service = service
+        let destination = destinationID
+        await withTaskGroup(of: Void.self) { group in
+            for levelCode in ["P1", "P2", "P3"] {
+                group.addTask {
+                    _ = try? await service.spots(level: levelCode, destination: destination, filters: SpotFilters())
+                }
+            }
+        }
+    }
+
     func loadRecommendation() async {
         let loaded: Fetched<LevelRecommendation>
         do {
@@ -190,22 +215,9 @@ final class HomeViewModel: ObservableObject {
     }
 
     func loadForecast() async {
-        guard let levelCode = recommendation?.recommended else {
-            forecastPoints = []
-            forecastLevelCode = nil
-            return
-        }
-
         isLoadingForecast = true
         defer { isLoadingForecast = false }
-        do {
-            let response = try await service.predictions(level: nil, date: arrivalAt).value
-            forecastPoints = response.levels.first(where: { $0.code == levelCode })?.points ?? []
-            forecastLevelCode = levelCode
-        } catch {
-            forecastPoints = []
-            forecastLevelCode = levelCode
-        }
+        forecast = try? await service.predictions(level: nil, date: arrivalAt).value
     }
 
     func loadNearbyLots() async {
