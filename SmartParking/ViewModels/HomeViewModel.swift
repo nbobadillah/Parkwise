@@ -31,17 +31,21 @@ final class HomeViewModel: ObservableObject {
 
     private let service: ParkingServicing
     private let locationService: LocationServicing
+    private let telemetry: TelemetryService
     private let defaults: UserDefaults
     private let selectedBuildingKey = "selectedBuildingID"
     private var lastLoadedZone: String?
+    private var lastViewedSlot: String?
 
     init(
         service: ParkingServicing,
         locationService: LocationServicing = LocationService.shared,
+        telemetry: TelemetryService? = nil,
         defaults: UserDefaults = .standard
     ) {
         self.service = service
         self.locationService = locationService
+        self.telemetry = telemetry ?? .shared
         self.defaults = defaults
         selectedBuildingID = defaults.string(forKey: selectedBuildingKey)
     }
@@ -144,10 +148,19 @@ final class HomeViewModel: ObservableObject {
 
     func loadRecommendation() async {
         do {
-            recommendation = try await service.recommendedLevel(arrivalAt: arrivalAt).value
+            let loaded = try await service.recommendedLevel(arrivalAt: arrivalAt).value
+            recommendation = loaded
+            trackForecastViewed(slot: loaded.slot)
         } catch {
             recommendation = nil
         }
+    }
+
+    private func trackForecastViewed(slot: String) {
+        guard slot != lastViewedSlot else { return }
+        let source = lastViewedSlot == nil ? "home_open" : "arrival_change"
+        lastViewedSlot = slot
+        telemetry.trackForecastViewed(screen: "home", arrivalSlot: slot, source: source)
     }
 
     func loadForecast() async {
