@@ -32,6 +32,7 @@
 		8657CD8FB5B66DB789B38B58 /* LevelCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92F8616FCC45CD2E2248B1E8 /* LevelCard.swift */; };
 		8D8F90A896A194AC19674818 /* AppTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDAB4AE8ABAED6F071013CA4 /* AppTabBar.swift */; };
 		91636DAFEF03B3FF70266C43 /* ParkingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD48138B295B21646737C805 /* ParkingService.swift */; };
+		E5408100FB6E5292F0B5E012 /* CachedReservationReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86D42899EF186A570489F796 /* CachedReservationReader.swift */; };
 		A32943DD9650C0ACC40FC4F3 /* CampusAlertService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B1875368A80F6268E91B431 /* CampusAlertService.swift */; };
 		A6A8D7F3E23EC520973A206A /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CCD26713F736832E9B8788A /* AuthViewModel.swift */; };
 		A84B621964648F955BA4E5DC /* FindCarComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95330879F0704F372978A43E /* FindCarComponents.swift */; };
@@ -77,6 +78,7 @@
 		5931C53022DF94FA3110F8F5 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
 		611A4A43675686E0660C91E8 /* SmartParking.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = SmartParking.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		630260762228BB1C0EDFBCD5 /* ParkingMapViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkingMapViewModel.swift; sourceTree = "<group>"; };
+		86D42899EF186A570489F796 /* CachedReservationReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachedReservationReader.swift; sourceTree = "<group>"; };
 		6B1875368A80F6268E91B431 /* CampusAlertService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CampusAlertService.swift; sourceTree = "<group>"; };
 		7496320DD17E3BD3BA7A83B2 /* RegisterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterView.swift; sourceTree = "<group>"; };
 		7842261127B8C973F3014152 /* ReserveSpotView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReserveSpotView.swift; sourceTree = "<group>"; };
@@ -159,6 +161,7 @@
 				2F04EEC9A6E3098E4DDFC2D2 /* ActionQueueStore.swift */,
 				CE10FBB9AA075CE9397D9BDD /* APIClient.swift */,
 				919709B4035C0C70D24CADD6 /* AuthService.swift */,
+				86D42899EF186A570489F796 /* CachedReservationReader.swift */,
 				6B1875368A80F6268E91B431 /* CampusAlertService.swift */,
 				5931C53022DF94FA3110F8F5 /* LocationService.swift */,
 				DADF73D1434D94B2971869B9 /* NetworkMonitor.swift */,
@@ -318,6 +321,7 @@
 				190FB64A496BE92C69B6CD02 /* AuthService.swift in Sources */,
 				EA4932CCEE2F704CAFE0C956 /* AuthValidation.swift in Sources */,
 				A6A8D7F3E23EC520973A206A /* AuthViewModel.swift in Sources */,
+				E5408100FB6E5292F0B5E012 /* CachedReservationReader.swift in Sources */,
 				A32943DD9650C0ACC40FC4F3 /* CampusAlertService.swift in Sources */,
 				784D1D84AB77BD4CAF898A77 /* CampusFullView.swift in Sources */,
 				A84B621964648F955BA4E5DC /* FindCarComponents.swift in Sources */,
