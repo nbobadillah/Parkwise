@@ -8,6 +8,7 @@ struct SmartParkingApp: App {
     private let locationService: LocationService
     private let parkedCarStore: ParkedCarStore
     private let networkMonitor: NetworkMonitor
+    private let actionQueue: ActionQueueing
 
     init() {
         let authService = BackendAuthService()
@@ -26,6 +27,12 @@ struct SmartParkingApp: App {
 
         _authViewModel = StateObject(
             wrappedValue: AuthViewModel(service: authService, networkMonitor: networkMonitor)
+        )
+
+        actionQueue = ActionQueue(
+            store: ActionQueueStore(),
+            service: reservationService,
+            networkMonitor: networkMonitor
         )
     }
 
