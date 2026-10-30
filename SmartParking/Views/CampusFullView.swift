@@ -173,6 +173,8 @@ private struct NearbyParkingCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
+            LotPhoto(url: lot.photoURL)
+
             HStack(alignment: .center) {
                 Text(lot.name)
                     .font(.system(size: 18, weight: .bold))
