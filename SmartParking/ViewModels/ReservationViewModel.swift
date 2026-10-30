@@ -47,17 +47,32 @@ final class ReservationViewModel: ObservableObject {
     private let service: ReservationServicing
     private let locationService: LocationServicing
     private let parkedCarStore: ParkedCarStoring
+    private let telemetry: TelemetryService
+    private let flowTracker: ReservationFlowTracking
     private var countdownTask: Task<Void, Never>?
 
     init(
         service: ReservationServicing,
         locationService: LocationServicing = LocationService.shared,
-        parkedCarStore: ParkedCarStoring = ParkedCarStore.shared
+        parkedCarStore: ParkedCarStoring = ParkedCarStore.shared,
+        telemetry: TelemetryService? = nil,
+        flowTracker: ReservationFlowTracking? = nil
     ) {
         self.service = service
         self.locationService = locationService
         self.parkedCarStore = parkedCarStore
+        self.telemetry = telemetry ?? .shared
+        self.flowTracker = flowTracker ?? CrashMonitor.shared
         parkedCar = parkedCarStore.parkedCar
+    }
+
+    func reserveScreenOpened() {
+        telemetry.trackReserveOpened()
+        flowTracker.setInReservationFlow(true)
+    }
+
+    func reserveScreenClosed() {
+        flowTracker.setInReservationFlow(false)
     }
 
     func reset() {
@@ -79,12 +94,15 @@ final class ReservationViewModel: ObservableObject {
 
     func create(spotId: String) async {
         error = nil
+        let start = ContinuousClock.now
         do {
             let reservation = try await service.create(spotId: spotId)
+            trackReservationRequest(since: start, error: nil)
             setActiveReservation(reservation)
             history.removeAll { $0.id == reservation.id }
             history.insert(reservation, at: 0)
         } catch let serviceError as ReservationServiceError {
+            trackReservationRequest(since: start, error: serviceError)
             switch serviceError {
             case .spotUnavailable:
                 error = .spotUnavailable
@@ -94,7 +112,30 @@ final class ReservationViewModel: ObservableObject {
                 error = .requestFailed(message)
             }
         } catch {
+            trackReservationRequest(since: start, error: error)
             self.error = .requestFailed(error.localizedDescription)
+        }
+    }
+
+    private func trackReservationRequest(since start: ContinuousClock.Instant, error: Error?) {
+        telemetry.trackReservationRequest(
+            durationMs: Int(start.duration(to: .now) / .milliseconds(1)),
+            errorType: error.map(Self.requestErrorType(for:))
+        )
+    }
+
+    private static func requestErrorType(for error: Error) -> String {
+        switch error {
+        case ReservationServiceError.spotUnavailable:
+            return "spot_taken"
+        case ReservationServiceError.activeReservationExists:
+            return "already_active"
+        case APIError.network:
+            return "offline"
+        case APIError.server(let status, _) where status >= 500:
+            return "server_error"
+        default:
+            return "other"
         }
     }
 

@@ -19,6 +19,8 @@ struct ReserveSpotView: View {
             .padding(.bottom, 18)
         }
         .background(Palette.screen)
+        .onAppear { viewModel.reserveScreenOpened() }
+        .onDisappear { viewModel.reserveScreenClosed() }
     }
 
     private var displayedSpotCode: String? {
