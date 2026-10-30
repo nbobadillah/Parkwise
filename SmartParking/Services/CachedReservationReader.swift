@@ -4,6 +4,8 @@ protocol CachedReservationReading: AnyObject {
     func active(userId: String) async throws -> Fetched<Reservation?>
     func history(userId: String) async throws -> Fetched<[Reservation]>
     func save(active: Reservation?, history: [Reservation], userId: String)
+    func vehicle(userId: String) async throws -> Fetched<ParkedVehicle?>
+    func clearVehicle(userId: String)
 }
 
 final class CachedReservationReader: CachedReservationReading {
@@ -31,6 +33,20 @@ final class CachedReservationReader: CachedReservationReading {
         let open = active.flatMap { $0.status == .active || $0.status == .fulfilled ? $0 : nil }
         cache.save(open, key: Self.activeKey(userId))
         cache.save(history, key: Self.historyKey(userId))
+    }
+
+    func vehicle(userId: String) async throws -> Fetched<ParkedVehicle?> {
+        try await cached(key: Self.vehicleKey(userId)) {
+            try await self.service.vehicle()
+        }
+    }
+
+    func clearVehicle(userId: String) {
+        cache.save(ParkedVehicle?.none, key: Self.vehicleKey(userId))
+    }
+
+    private static func vehicleKey(_ userId: String) -> String {
+        "vehicle-\(userId)"
     }
 
     private static func activeKey(_ userId: String) -> String {

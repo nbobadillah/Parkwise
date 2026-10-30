@@ -45,6 +45,7 @@ final class ReservationViewModel: ObservableObject {
     @Published private(set) var parkedCar: ParkedCar?
     @Published private(set) var isLoadingVehicle = false
     @Published private(set) var vehicleErrorMessage: String?
+    @Published private(set) var vehicleSavedAt: Date?
     @Published private(set) var isPerformingAction = false
     @Published private(set) var error: ReservationViewModelError?
     @Published private(set) var pendingAction: PendingActionKind?
@@ -120,6 +121,7 @@ final class ReservationViewModel: ObservableObject {
         history = []
         vehicle = nil
         vehicleErrorMessage = nil
+        vehicleSavedAt = nil
         error = nil
         userId = nil
         syncFailureMessage = nil
@@ -211,6 +213,7 @@ final class ReservationViewModel: ObservableObject {
         if activeReservation?.status == .cancelled || activeReservation?.status == .released {
             parkedCarStore.clear()
             parkedCar = nil
+            forgetVehicle()
             await loadVehicle()
         }
     }
@@ -220,10 +223,24 @@ final class ReservationViewModel: ObservableObject {
         vehicleErrorMessage = nil
         defer { isLoadingVehicle = false }
         do {
-            vehicle = try await service.vehicle()
+            guard let userId else {
+                vehicle = try await service.vehicle()
+                vehicleSavedAt = nil
+                return
+            }
+            let fetched = try await reader.vehicle(userId: userId)
+            vehicle = fetched.value
+            vehicleSavedAt = fetched.fromCache && fetched.value != nil ? fetched.fetchedAt : nil
         } catch {
             vehicleErrorMessage = error.localizedDescription
         }
+    }
+
+    private func forgetVehicle() {
+        vehicle = nil
+        vehicleSavedAt = nil
+        guard let userId else { return }
+        reader.clearVehicle(userId: userId)
     }
 
     private func performReservationAction(_ action: () async throws -> Reservation) async {
@@ -269,6 +286,7 @@ final class ReservationViewModel: ObservableObject {
         if synchronizedAction == .release, activeReservation == nil {
             parkedCarStore.clear()
             parkedCar = nil
+            forgetVehicle()
         }
         await loadVehicle()
     }
