@@ -81,7 +81,7 @@ struct FindCarView: View {
         .task(id: networkMonitor.isConnected) {
             await viewModel.loadVehicle()
         }
-        .task(id: (vehicleLevelCode ?? "") + (destinationID ?? "")) {
+        .task(id: "\(vehicleLevelCode ?? "")|\(destinationID ?? "")|\(networkMonitor.isConnected)") {
             guard let vehicleLevelCode else { return }
             parkingViewModel.destination = destinationID
             isLoadingSpots = true
@@ -98,6 +98,9 @@ struct FindCarView: View {
             Text(parkedAtText)
                 .font(.system(size: 13))
                 .foregroundStyle(Palette.subtle)
+            if let savedAt = viewModel.vehicleSavedAt {
+                SavedPill(savedAt: savedAt)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 18)
@@ -146,6 +149,7 @@ struct FindCarView: View {
     private func floorCard(_ vehicle: ParkedVehicle) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             CaptionLabel(text: "\(vehicle.levelCode) · Zone \(vehicle.zone) — Floor view")
+            savedSpotsPill
             FindCarFloorMap(
                 zones: parkingViewModel.zones,
                 selectedSpotID: vehicle.spotId,
@@ -158,6 +162,13 @@ struct FindCarView: View {
         .cardStyle(radius: 8)
     }
 
+    @ViewBuilder
+    private var savedSpotsPill: some View {
+        if parkingViewModel.fromCache, let fetchedAt = parkingViewModel.fetchedAt {
+            SavedPill(savedAt: fetchedAt)
+        }
+    }
+
     private func matchingParkedCar(for vehicle: ParkedVehicle) -> ParkedCar? {
         guard let parkedCar = viewModel.parkedCar,
               parkedCar.levelCode == vehicle.levelCode,
@@ -168,6 +179,7 @@ struct FindCarView: View {
     private func floorCard(_ parkedCar: ParkedCar) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             CaptionLabel(text: "\(localLevelTitle(for: parkedCar)) — Floor view")
+            savedSpotsPill
             FindCarFloorMap(
                 zones: parkingViewModel.zones,
                 selectedSpotID: localSpot(for: parkedCar)?.id,
