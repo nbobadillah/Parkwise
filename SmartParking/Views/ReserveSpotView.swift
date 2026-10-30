@@ -9,6 +9,9 @@ struct ReserveSpotView: View {
             VStack(alignment: .leading, spacing: 18) {
                 header
                 mainReservationCard
+                if let message = viewModel.pendingMessage {
+                    AuthBanner(message: message, isError: false)
+                }
                 if let error = viewModel.error {
                     AuthBanner(message: error.message, isError: true)
                 }
@@ -71,6 +74,9 @@ struct ReserveSpotView: View {
             Text(displayedSpotTitle ?? "Select a parking spot")
                 .font(.system(size: 15, weight: .medium))
                 .foregroundStyle(Palette.muted)
+            if let savedAt = viewModel.savedAt {
+                SavedPill(savedAt: savedAt)
+            }
         }
     }
 
@@ -133,6 +139,7 @@ struct ReserveSpotView: View {
             .buttonStyle(.plain)
             .disabled(
                 viewModel.isPerformingAction
+                    || viewModel.pendingAction != nil
                     || isReservationClosed
                     || (selectedSpot == nil && matchingReservation == nil)
             )
