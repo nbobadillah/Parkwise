@@ -13,8 +13,9 @@ final class FindSpotViewModel: ObservableObject {
 
     private let service: ParkingServicing
 
-    init(service: ParkingServicing) {
+    init(service: ParkingServicing, filter: FindSpotFilter = .available) {
         self.service = service
+        self.filter = filter
     }
 
     func load(levels: [LevelSummary], destinationID: String?) async {

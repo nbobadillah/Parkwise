@@ -2,51 +2,53 @@ import SwiftUI
 
 struct LevelCard: View {
     let level: LevelSummary
+    var isRecommended = false
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 14) {
+            HStack(spacing: 16) {
                 Text(level.code)
-                    .font(.system(size: 15, weight: .bold))
+                    .font(AppFont.monoId)
                     .foregroundStyle(level.status.tint.strong)
-                    .frame(width: 44, height: 44)
+                    .frame(width: 36, height: 36)
                     .background(
-                        RoundedRectangle(cornerRadius: 11, style: .continuous)
+                        RoundedRectangle(cornerRadius: Radius.small, style: .continuous)
                             .fill(level.status.tint.soft)
                     )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 11, style: .continuous)
-                            .stroke(level.status.tint.strong.opacity(0.35), lineWidth: 1)
-                    )
 
-                VStack(alignment: .leading, spacing: 9) {
+                VStack(alignment: .leading, spacing: 8) {
                     HStack(spacing: 8) {
-                        Text(level.listTitle)
-                            .font(.system(size: 17, weight: .semibold))
+                        Text(isRecommended ? "\(level.name) · best" : level.name)
+                            .font(AppFont.heading2)
                             .foregroundStyle(Palette.ink)
+                            .lineLimit(1)
                         Spacer(minLength: 4)
                         StatusPill(status: level.status)
                     }
 
                     ProgressTrack(value: level.occupancy, color: level.status.tint.strong)
 
-                    HStack(spacing: 8) {
-                        Text(level.freeTitle)
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(level.status.tint.strong)
-                        Text("\(level.reserved) reserved · \(level.total) total")
-                            .font(.system(size: 13))
-                            .foregroundStyle(Palette.muted)
-                    }
+                    (Text(level.freeTitle).fontWeight(.semibold).foregroundColor(level.status.tint.strong)
+                        + Text("  \(level.reserved) reserved  \(level.occupied) occupied  \(level.total) total"))
+                        .font(AppFont.caption)
+                        .foregroundStyle(Palette.muted)
+                        .lineLimit(2)
                 }
 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Palette.slate)
+                    .foregroundStyle(Palette.line)
             }
-            .padding(14)
-            .cardStyle()
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+                    .fill(Palette.card)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+                    .stroke(isRecommended ? Palette.accent : Palette.line, lineWidth: isRecommended ? 1.5 : 1)
+            )
         }
         .buttonStyle(.plain)
     }
@@ -60,23 +62,24 @@ struct QuickAction: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 12) {
+            HStack(spacing: 8) {
                 Image(systemName: icon)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(tint.strong)
-                    .frame(width: 34, height: 34)
+                    .frame(width: 32, height: 32)
                     .background(
-                        RoundedRectangle(cornerRadius: 9, style: .continuous)
+                        RoundedRectangle(cornerRadius: Radius.small, style: .continuous)
                             .fill(tint.soft)
                     )
                 Text(title)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(AppFont.heading2)
                     .foregroundStyle(Palette.ink)
+                    .lineLimit(1)
                 Spacer(minLength: 0)
             }
-            .padding(12)
+            .padding(16)
             .frame(maxWidth: .infinity)
-            .cardStyle(radius: 14)
+            .cardStyle()
         }
         .buttonStyle(.plain)
     }

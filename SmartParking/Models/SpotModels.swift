@@ -24,7 +24,8 @@ struct Spot: Codable, Identifiable, Equatable {
         switch status {
         case .free: return .free
         case .reserved: return .reserved
-        case .occupied, .disabled: return .taken
+        case .occupied: return .taken
+        case .disabled: return .unavailable
         }
     }
 }

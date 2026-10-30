@@ -6,16 +6,26 @@ struct CampusFullView: View {
     @ObservedObject var alerts: CampusAlertService
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                header
-                alertCard
-                nearbyParkingSection
-                notifyCard
+        VStack(spacing: 0) {
+            header
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    alertCard
+                    Text("Nearby parking")
+                        .font(AppFont.heading1)
+                        .foregroundStyle(Palette.ink)
+                        .padding(.top, 24)
+                    nearbyParkingSection
+                        .padding(.top, 8)
+                    notifyCard
+                        .padding(.top, 16)
+                }
+                .padding(16)
             }
-            .padding(.horizontal, 18)
-            .padding(.top, 14)
-            .padding(.bottom, 14)
+            .refreshable {
+                await viewModel.loadNearbyLots()
+                await viewModel.loadLevels(isAuthenticated: authViewModel.isAuthenticated)
+            }
         }
         .background(Palette.screen)
         .task { await viewModel.loadNearbyLots() }
@@ -32,108 +42,110 @@ struct CampusFullView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("No campus spots")
-                .font(.system(size: 34, weight: .bold))
+                .font(AppFont.display)
                 .foregroundStyle(Palette.ink)
             Text("All levels at capacity")
-                .font(.system(size: 15))
+                .font(AppFont.body)
                 .foregroundStyle(Palette.muted)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 16)
+        .padding(.top, 24)
+        .padding(.bottom, 16)
+        .background(Palette.card)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(Palette.line)
+                .frame(height: 1)
         }
     }
 
     private var alertCard: some View {
-        HStack(alignment: .center, spacing: 12) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(Palette.alertRed)
-                    .frame(width: 30, height: 30)
-                Image(systemName: "xmark")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(.white)
-            }
-
+        HStack(alignment: .top, spacing: 16) {
+            Image(systemName: "xmark")
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(width: 32, height: 32)
+                .background(
+                    RoundedRectangle(cornerRadius: Radius.small, style: .continuous)
+                        .fill(Palette.redInk)
+                )
             VStack(alignment: .leading, spacing: 2) {
                 Text("Campus is full")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(Palette.alertRed)
-                Text("No campus spots are available. Nearby alternatives are listed below.")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(Palette.alertText)
+                    .font(AppFont.heading2)
+                    .foregroundStyle(Palette.redInk)
+                Text("All 3 levels at capacity. Nearby options below.")
+                    .font(AppFont.body)
+                    .foregroundStyle(Palette.muted)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            Spacer(minLength: 0)
         }
-        .padding(.vertical, 12)
-        .padding(.horizontal, 14)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Palette.alertSoft)
+            RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+                .fill(Palette.redSoft)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+                .stroke(Palette.redInk.opacity(0.3), lineWidth: 1)
         )
     }
 
+    @ViewBuilder
     private var nearbyParkingSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Nearby parking")
-                .font(.system(size: 30, weight: .bold))
-                .foregroundStyle(Palette.ink)
-
-            if viewModel.isLoadingNearbyLots {
-                ProgressView()
-                    .frame(maxWidth: .infinity)
-            } else if let errorMessage = viewModel.nearbyLotsErrorMessage {
-                AuthBanner(message: errorMessage, isError: true)
-            } else if viewModel.nearbyLots.isEmpty {
-                Text("No nearby parking options available")
-                    .font(.system(size: 14))
-                    .foregroundStyle(Palette.muted)
-            } else {
-                VStack(spacing: 14) {
-                    ForEach(viewModel.nearbyLots) { lot in
-                        NearbyParkingCard(
-                            lot: lot,
-                            isPrimary: lot.id == viewModel.nearbyLots.first?.id
-                        )
-                    }
+        if viewModel.isLoadingNearbyLots && viewModel.nearbyLots.isEmpty {
+            ProgressView()
+                .frame(maxWidth: .infinity)
+        } else if let errorMessage = viewModel.nearbyLotsErrorMessage, viewModel.nearbyLots.isEmpty {
+            NoticeBox(message: errorMessage, tone: .danger, icon: "exclamationmark.circle")
+        } else if viewModel.nearbyLots.isEmpty {
+            Text("No nearby parking options available")
+                .font(AppFont.caption)
+                .foregroundStyle(Palette.muted)
+        } else {
+            VStack(spacing: 8) {
+                ForEach(viewModel.nearbyLots) { lot in
+                    NearbyParkingCard(
+                        lot: lot,
+                        isPrimary: lot.id == viewModel.nearbyLots.first?.id
+                    )
                 }
             }
         }
     }
 
     private var notifyCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Notify when campus opens up")
-                .font(.system(size: 18, weight: .bold))
-                .foregroundStyle(Palette.ink)
-            HStack(alignment: .center, spacing: 12) {
+        HStack(alignment: .top, spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Notify when campus opens up")
+                    .font(AppFont.heading2)
+                    .foregroundStyle(Palette.ink)
                 Text(notifyMessage)
-                    .font(.system(size: 13))
+                    .font(AppFont.caption)
                     .foregroundStyle(Palette.muted)
-                    .frame(maxWidth: .infinity, alignment: .leading)
                     .fixedSize(horizontal: false, vertical: true)
-                Button(action: notifyAction) {
-                    Text(notifyButtonTitle)
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(alerts.state == .watching ? Palette.ink : .white)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
-                        .frame(minWidth: 104)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .fill(alerts.state == .watching ? Palette.buttonGray : Palette.purple)
-                        )
-                }
-                .buttonStyle(.plain)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            Button(action: notifyAction) {
+                Text(notifyButtonTitle)
+                    .font(AppFont.button)
+                    .foregroundStyle(alerts.state == .watching ? Palette.ink : .white)
+                    .padding(.horizontal, 16)
+                    .frame(minWidth: 88, minHeight: 36)
+                    .background(
+                        RoundedRectangle(cornerRadius: Radius.small, style: .continuous)
+                            .fill(alerts.state == .watching ? Palette.screen : Palette.purple)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Radius.small, style: .continuous)
+                            .stroke(alerts.state == .watching ? Palette.line : Color.clear, lineWidth: 1)
+                    )
+            }
+            .buttonStyle(.plain)
         }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Palette.card)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(Palette.line, lineWidth: 1)
-                )
-        )
+        .padding(16)
+        .cardStyle()
     }
 
     private var notifyMessage: String {
@@ -172,62 +184,70 @@ private struct NearbyParkingCard: View {
     let isPrimary: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .center) {
-                Text(lot.name)
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(Palette.ink)
-                Spacer()
-                Text("\(lot.ratePerHour.formatted(.currency(code: lot.currency)))/hr")
-                    .font(.system(size: 18, weight: .bold, design: .monospaced))
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top, spacing: 16) {
+                VStack(alignment: .leading, spacing: 8) {
+                    if isPrimary {
+                        Text("CLOSEST")
+                            .font(AppFont.overline)
+                            .tracking(0.6)
+                            .foregroundStyle(Palette.accent)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 2)
+                            .background(
+                                RoundedRectangle(cornerRadius: Radius.badge, style: .continuous)
+                                    .fill(Palette.accentSoft)
+                            )
+                    }
+                    Text(lot.name)
+                        .font(AppFont.heading2)
+                        .foregroundStyle(Palette.ink)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 0)
+                Text("\(lot.ratePerHour.formatted(.currency(code: lot.currency).precision(.fractionLength(0))))/hr")
+                    .font(.system(size: 14, weight: .medium, design: .monospaced))
                     .foregroundStyle(Palette.ink)
             }
 
-            HStack(alignment: .center, spacing: 6) {
-                Image(systemName: "mappin.and.ellipse")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(Palette.muted)
-                Text(lot.address)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(Palette.muted)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
+            Text(lot.address)
+                .font(AppFont.caption)
+                .foregroundStyle(Palette.muted)
+                .fixedSize(horizontal: false, vertical: true)
 
-            HStack(spacing: 6) {
+            HStack(spacing: 2) {
                 Image(systemName: "figure.walk")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(Palette.ink)
+                    .font(.system(size: 11))
                 Text("\(lot.walkMinutes) min")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(Palette.ink)
-            }
-
-            HStack(alignment: .center) {
-                Spacer()
+                Spacer(minLength: 8)
                 Button(action: navigate) {
                     Text("Navigate")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 18)
-                        .padding(.vertical, 12)
-                        .frame(minWidth: 120)
+                        .font(AppFont.button)
+                        .foregroundStyle(isPrimary ? .white : Palette.ink)
+                        .padding(.horizontal, 16)
+                        .frame(minWidth: 88, minHeight: 36)
                         .background(
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .fill(isPrimary ? Palette.accent : Palette.buttonGray)
+                            RoundedRectangle(cornerRadius: Radius.small, style: .continuous)
+                                .fill(isPrimary ? Palette.accent : Palette.screen)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: Radius.small, style: .continuous)
+                                .stroke(isPrimary ? Color.clear : Palette.line, lineWidth: 1)
                         )
                 }
                 .buttonStyle(.plain)
             }
+            .font(AppFont.caption)
+            .foregroundStyle(Palette.muted)
         }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
+            RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
                 .fill(Palette.card)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .stroke(isPrimary ? Palette.accent : Palette.line, lineWidth: isPrimary ? 1.8 : 1)
-                )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+                .stroke(isPrimary ? Palette.accent : Palette.line, lineWidth: isPrimary ? 1.5 : 1)
         )
     }
 

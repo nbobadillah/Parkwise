@@ -3,76 +3,150 @@ import SwiftUI
 struct SpotCell: View {
     let spot: ParkingSpot
     let isSelected: Bool
+    var highlight: Color?
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            RoundedRectangle(cornerRadius: 9, style: .continuous)
-                .fill(fill)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 9, style: .continuous)
-                        .stroke(stroke, lineWidth: isSelected ? 0 : 1)
+            Text(spot.code)
+                .font(.system(size: 10, weight: .medium, design: .monospaced))
+                .foregroundStyle(spot.state == .unavailable ? Palette.muted : Palette.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .padding(.horizontal, 2)
+                .frame(maxWidth: .infinity)
+                .frame(height: 30)
+                .background(
+                    RoundedRectangle(cornerRadius: Radius.badge, style: .continuous)
+                        .fill(fill)
                 )
-                .overlay(content)
-                .frame(height: 42)
+                .overlay(
+                    RoundedRectangle(cornerRadius: Radius.badge, style: .continuous)
+                        .stroke(border, lineWidth: borderWidth)
+                )
         }
         .buttonStyle(.plain)
-        .disabled(spot.state == .taken && !isSelected)
+        .disabled(spot.state != .free && spot.state != .you && !isSelected)
+        .accessibilityLabel("\(spot.code), \(stateTitle)")
     }
 
-    private var content: some View {
-        Text(spot.code)
-            .font(.system(size: 11, weight: .bold, design: .monospaced))
-            .foregroundStyle(textColor)
-            .lineLimit(1)
-            .minimumScaleFactor(0.6)
-            .padding(.horizontal, 2)
-    }
-
-    private var textColor: Color {
-        if isSelected { return .white }
-        switch spot.state {
-        case .free: return Palette.greenInk
-        case .taken: return Palette.muted
-        case .reserved: return Palette.amberInk
-        case .you: return Palette.accent
-        }
-    }
-
-    private var fill: Color {
-        if isSelected { return Palette.slate }
+    private var baseFill: Color {
         switch spot.state {
         case .free: return Palette.greenSoft
-        case .taken: return Palette.neutral
+        case .taken: return Palette.card
+        case .unavailable: return Palette.neutral
         case .reserved: return Palette.amberSoft
         case .you: return Palette.accentSoft
         }
     }
 
-    private var stroke: Color {
+    private var fill: Color {
+        guard let highlight else { return baseFill }
+        return highlight.opacity(0.12)
+    }
+
+    private var border: Color {
+        if isSelected || spot.state == .you { return Palette.accent }
+        if let highlight { return highlight }
         switch spot.state {
-        case .free: return Palette.greenInk.opacity(0.35)
+        case .free: return Palette.greenInk.opacity(0.4)
         case .taken: return Palette.line
-        case .reserved: return Palette.amberInk.opacity(0.4)
+        case .unavailable: return Palette.muted
+        case .reserved: return Palette.amberInk.opacity(0.6)
         case .you: return Palette.accent
         }
+    }
+
+    private var borderWidth: CGFloat {
+        if highlight != nil && !isSelected && spot.state != .you { return 2.5 }
+        return isSelected || spot.state == .you ? 1.5 : 1
+    }
+
+    private var stateTitle: String {
+        switch spot.state {
+        case .free: return "free"
+        case .taken: return "taken"
+        case .unavailable: return "unavailable"
+        case .reserved: return "reserved"
+        case .you: return "your spot"
+        }
+    }
+}
+
+struct SpotRow: View {
+    static let slots = 6
+
+    let row: ParkingRow
+    let selectedSpotID: String?
+    var highlight: (ParkingSpot) -> Color? = { _ in nil }
+    let onSelect: (ParkingSpot) -> Void
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Text("\(row.index)")
+                .font(AppFont.monoData)
+                .foregroundStyle(Palette.muted)
+                .frame(width: 14, alignment: .leading)
+            ForEach(0..<Self.slots, id: \.self) { slot in
+                if slot < row.spots.count {
+                    let spot = row.spots[slot]
+                    SpotCell(spot: spot, isSelected: spot.id == selectedSpotID, highlight: highlight(spot)) {
+                        onSelect(spot)
+                    }
+                } else {
+                    Color.clear
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 30)
+                }
+            }
+        }
+    }
+}
+
+struct SpotLegend: View {
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 16) { items }
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 16) {
+                    LegendDot(title: "Free", fill: Palette.greenSoft, stroke: Palette.greenInk)
+                    LegendDot(title: "Taken", fill: Palette.card, stroke: Palette.line)
+                    LegendDot(title: "Reserved", fill: Palette.amberSoft, stroke: Palette.amberInk)
+                }
+                HStack(spacing: 16) {
+                    LegendDot(title: "Unavailable", fill: Palette.neutral, stroke: Palette.muted)
+                    LegendDot(title: "You", fill: Palette.accentSoft, stroke: Palette.accent)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var items: some View {
+        LegendDot(title: "Free", fill: Palette.greenSoft, stroke: Palette.greenInk)
+        LegendDot(title: "Taken", fill: Palette.card, stroke: Palette.line)
+        LegendDot(title: "Reserved", fill: Palette.amberSoft, stroke: Palette.amberInk)
+        LegendDot(title: "Unavailable", fill: Palette.neutral, stroke: Palette.muted)
+        LegendDot(title: "You", fill: Palette.accentSoft, stroke: Palette.accent)
     }
 }
 
 struct LaneDivider: View {
     var body: some View {
-        RoundedRectangle(cornerRadius: 8, style: .continuous)
-            .stroke(style: StrokeStyle(lineWidth: 1, dash: [5, 4]))
-            .foregroundStyle(Palette.line)
-            .frame(height: 24)
+        RoundedRectangle(cornerRadius: Radius.badge, style: .continuous)
+            .fill(Palette.line.opacity(0.5))
+            .frame(height: 18)
             .overlay(
-                HStack(spacing: 16) {
-                    ForEach(0..<5, id: \.self) { _ in
-                        Capsule()
-                            .fill(Palette.slate.opacity(0.5))
+                HStack {
+                    ForEach(0..<6, id: \.self) { _ in
+                        Spacer(minLength: 0)
+                        Rectangle()
+                            .fill(Palette.muted.opacity(0.4))
                             .frame(width: 14, height: 2)
                     }
+                    Spacer(minLength: 0)
                 }
+                .padding(.horizontal, 16)
             )
     }
 }
@@ -82,38 +156,39 @@ struct ZoneHeader: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            RoundedRectangle(cornerRadius: 2)
-                .fill(Palette.accent)
-                .frame(width: 3, height: 15)
-            Text(name)
-                .font(.system(size: 15, weight: .bold))
-                .foregroundStyle(Palette.accent)
             Rectangle()
-                .fill(Palette.line)
-                .frame(height: 1)
+                .fill(Palette.accent)
+                .frame(width: 3, height: 14)
+            Text(name)
+                .font(AppFont.heading2)
+                .foregroundStyle(Palette.accent)
+            Spacer(minLength: 0)
         }
     }
 }
 
 struct EntranceBar: View {
     var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "door.left.hand.open")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(Palette.accent)
+        HStack(spacing: 8) {
+            Image(systemName: "arrow.left.arrow.right")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(Palette.muted)
             Text("ENTRANCE / EXIT")
-                .font(.system(size: 14, weight: .bold))
-                .tracking(0.8)
-                .foregroundStyle(Palette.accent)
+                .font(AppFont.overline)
+                .tracking(0.6)
+                .foregroundStyle(Palette.ink)
             Rectangle()
                 .fill(Palette.line)
                 .frame(height: 1)
-            Text("→ N")
-                .font(.system(size: 13, weight: .medium))
+            Image(systemName: "arrow.right")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(Palette.muted)
+            Text("N")
+                .font(AppFont.caption)
                 .foregroundStyle(Palette.muted)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 13)
-        .cardStyle(radius: 12)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .cardStyle()
     }
 }

@@ -12,29 +12,37 @@ extension Color {
 enum Palette {
     static let screen = Color(hex: 0xF4F5F7)
     static let card = Color.white
-    static let ink = Color(hex: 0x111C33)
-    static let muted = Color(hex: 0x8A94A6)
-    static let line = Color(hex: 0xE5E8EE)
-    static let accent = Color(hex: 0x1B41CC)
-    static let accentSoft = Color(hex: 0xEBF0FE)
-    static let greenInk = Color(hex: 0x14804A)
-    static let greenSoft = Color(hex: 0xE3F6EA)
-    static let amberInk = Color(hex: 0xC2780F)
-    static let amberSoft = Color(hex: 0xFDF2D6)
-    static let amberText = Color(hex: 0xC37B1F)
-    static let redInk = Color(hex: 0xC63A20)
-    static let redSoft = Color(hex: 0xFAE4DE)
-    static let alertRed = Color(hex: 0xD74D3D)
-    static let alertSoft = Color(hex: 0xFDE6E2)
-    static let alertText = Color(hex: 0xA84D38)
-    static let neutral = Color(hex: 0xF1F3F7)
-    static let slate = Color(hex: 0x98A2B3)
-    static let violetSoft = Color(hex: 0xEFEBFD)
-    static let violetInk = Color(hex: 0x5B3BD1)
-    static let purple = Color(hex: 0x7C5BE8)
-    static let buttonGray = Color(hex: 0xDDE2EA)
-    static let subtle = Color(hex: 0x667085)
-    static let border = Color(hex: 0xD9DDE4) 
+    static let ink = Color(hex: 0x172B4D)
+    static let muted = Color(hex: 0x6B778C)
+    static let line = Color(hex: 0xEBECF0)
+    static let accent = Color(hex: 0x0052CC)
+    static let accentHover = Color(hex: 0x0065FF)
+    static let accentSoft = Color(hex: 0xDEEBFF)
+    static let greenInk = Color(hex: 0x36B37E)
+    static let greenSoft = Color(hex: 0xE3FCEF)
+    static let amberInk = Color(hex: 0xFFAB00)
+    static let amberSoft = Color(hex: 0xFFF7D6)
+    static let amberBorder = Color(hex: 0xFFE380)
+    static let amberText = Color(hex: 0xFF8B00)
+    static let redInk = Color(hex: 0xDE350B)
+    static let redSoft = Color(hex: 0xFFEBE6)
+    static let alertRed = Color(hex: 0xDE350B)
+    static let alertSoft = Color(hex: 0xFFEBE6)
+    static let alertText = Color(hex: 0xDE350B)
+    static let neutral = Color(hex: 0xF4F5F7)
+    static let slate = Color(hex: 0x6B778C)
+    static let violetSoft = Color(hex: 0xEAE6FF)
+    static let violetInk = Color(hex: 0x6554C0)
+    static let purple = Color(hex: 0x6554C0)
+    static let buttonGray = Color(hex: 0xEBECF0)
+    static let subtle = Color(hex: 0x6B778C)
+    static let border = Color(hex: 0xEBECF0)
+}
+
+enum Radius {
+    static let badge: CGFloat = 3
+    static let small: CGFloat = 6
+    static let card: CGFloat = 8
 }
 
 struct Tint {

@@ -28,6 +28,7 @@ enum LevelStatus {
 enum SpotState {
     case free
     case taken
+    case unavailable
     case reserved
     case you
 }
@@ -39,6 +40,9 @@ struct ParkingSpot: Identifiable, Equatable {
     let levelCode: String
     var state: SpotState
     let walkMinutes: Int
+    let isAccessible: Bool
+    let isEv: Bool
+    let isVip: Bool
 
     init(spot: Spot) {
         id = spot.id
@@ -47,6 +51,18 @@ struct ParkingSpot: Identifiable, Equatable {
         levelCode = spot.levelCode
         state = spot.state
         walkMinutes = spot.walkMinutes
+        isAccessible = spot.isAccessible
+        isEv = spot.isEv
+        isVip = spot.isVip
+    }
+
+    func matches(_ filter: FindSpotFilter) -> Bool {
+        switch filter {
+        case .available: return state == .free
+        case .vip: return isVip
+        case .electric: return isEv
+        case .accessible: return isAccessible
+        }
     }
 }
 
