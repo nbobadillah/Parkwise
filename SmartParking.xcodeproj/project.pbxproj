@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7DD5F052C72EF7F2B1308D77 /* LotImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AB49F68203F4CFBFCA8BDB5 /* LotImageCache.swift */; };
+		C68F3145DEDCAD6493E76C48 /* LotPhotoViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C359C90CEF18526225AF000 /* LotPhotoViewModel.swift */; };
+		92B4C7611C8E6FE5A6885B72 /* LotPhoto.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9A9D408D4A9D4EE637CAC69 /* LotPhoto.swift */; };
 		06B50B6FE3640169B86F29C4 /* ResponseCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC58F4E3CBAD7CF19E7962D /* ResponseCache.swift */; };
 		07D51D5F9677FA2F679B03C1 /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88535BA91C5335FBEAFBE178 /* SessionStore.swift */; };
 		14D916DE87B650EF55E10818 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = DADF73D1434D94B2971869B9 /* NetworkMonitor.swift */; };
@@ -95,6 +98,9 @@
 		B8EA5DE185C190EBBB9B7543 /* ParkingMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkingMapView.swift; sourceTree = "<group>"; };
 		C57417A1C59B2AF969E87A02 /* SmartParkingApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartParkingApp.swift; sourceTree = "<group>"; };
 		C8069442E6B23B43B0A1E421 /* FindSpotViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindSpotViewModel.swift; sourceTree = "<group>"; };
+		8AB49F68203F4CFBFCA8BDB5 /* LotImageCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LotImageCache.swift; sourceTree = "<group>"; };
+		9C359C90CEF18526225AF000 /* LotPhotoViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LotPhotoViewModel.swift; sourceTree = "<group>"; };
+		C9A9D408D4A9D4EE637CAC69 /* LotPhoto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LotPhoto.swift; sourceTree = "<group>"; };
 		CE10FBB9AA075CE9397D9BDD /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		CEC58F4E3CBAD7CF19E7962D /* ResponseCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponseCache.swift; sourceTree = "<group>"; };
 		DA91CC8380974220F8463130 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
@@ -119,6 +125,7 @@
 			isa = PBXGroup;
 			children = (
 				2CCD26713F736832E9B8788A /* AuthViewModel.swift */,
+				9C359C90CEF18526225AF000 /* LotPhotoViewModel.swift */,
 				C8069442E6B23B43B0A1E421 /* FindSpotViewModel.swift */,
 				A2FEE8F9F2F4BDC28C2BB803 /* HomeViewModel.swift */,
 				630260762228BB1C0EDFBCD5 /* ParkingMapViewModel.swift */,
@@ -158,6 +165,7 @@
 				5B8EAA9A48C2730BF978F643 /* ActionQueue.swift */,
 				2F04EEC9A6E3098E4DDFC2D2 /* ActionQueueStore.swift */,
 				CE10FBB9AA075CE9397D9BDD /* APIClient.swift */,
+				8AB49F68203F4CFBFCA8BDB5 /* LotImageCache.swift */,
 				919709B4035C0C70D24CADD6 /* AuthService.swift */,
 				6B1875368A80F6268E91B431 /* CampusAlertService.swift */,
 				5931C53022DF94FA3110F8F5 /* LocationService.swift */,
@@ -201,6 +209,7 @@
 			isa = PBXGroup;
 			children = (
 				DDAB4AE8ABAED6F071013CA4 /* AppTabBar.swift */,
+				C9A9D408D4A9D4EE637CAC69 /* LotPhoto.swift */,
 				1A73A5B6567D1A2F0038190C /* AuthComponents.swift */,
 				95330879F0704F372978A43E /* FindCarComponents.swift */,
 				34D2DFAB7381760043AA924F /* FindSpotComponents.swift */,
@@ -311,6 +320,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7DD5F052C72EF7F2B1308D77 /* LotImageCache.swift in Sources */,
+				C68F3145DEDCAD6493E76C48 /* LotPhotoViewModel.swift in Sources */,
+				92B4C7611C8E6FE5A6885B72 /* LotPhoto.swift in Sources */,
 				597417B176BB63A605A3EA9E /* APIClient.swift in Sources */,
 				8D8F90A896A194AC19674818 /* AppTabBar.swift in Sources */,
 				D8005B1676FC7B8DA1586831 /* AppUser.swift in Sources */,
