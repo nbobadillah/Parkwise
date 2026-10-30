@@ -54,4 +54,9 @@ struct NearbyLot: Codable, Identifiable, Equatable {
     let ratePerHour: Int
     let currency: String
     let walkMinutes: Int
+    let imageUrl: String?
+
+    var photoURL: URL? {
+        imageUrl.flatMap { URL(string: $0, relativeTo: APIClient.configuredBaseURL)?.absoluteURL }
+    }
 }
