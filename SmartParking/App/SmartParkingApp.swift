@@ -2,6 +2,7 @@ import SwiftUI
 
 @main
 struct SmartParkingApp: App {
+    @Environment(\.scenePhase) private var scenePhase
     @StateObject private var authViewModel: AuthViewModel
     private let parkingService: ParkingServicing
     private let reservationService: ReservationServicing
@@ -17,6 +18,7 @@ struct SmartParkingApp: App {
         let networkMonitor = NetworkMonitor.shared
 
         TelemetryService.shared.token = { authService.token }
+        CrashMonitor.shared.start()
 
         parkingService = BackendParkingService(token: { authService.token })
         reservationService = BackendReservationService(token: { authService.token })
@@ -57,6 +59,16 @@ struct SmartParkingApp: App {
             .task {
                 await authViewModel.restoreSession()
                 TelemetryService.shared.trackAppOpened()
+            }
+            .onChange(of: scenePhase) { _, phase in
+                switch phase {
+                case .active:
+                    CrashMonitor.shared.sessionDidBecomeActive()
+                case .background:
+                    CrashMonitor.shared.sessionDidEnd()
+                default:
+                    break
+                }
             }
         }
     }
