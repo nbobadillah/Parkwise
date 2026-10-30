@@ -34,7 +34,8 @@ struct RootView: View {
         reservationService: ReservationServicing,
         locationService: LocationService,
         parkedCarStore: ParkedCarStore,
-        networkMonitor: NetworkMonitor
+        networkMonitor: NetworkMonitor,
+        actionQueue: ActionQueueing
     ) {
         self.parkingService = parkingService
         self.reservationService = reservationService
@@ -46,8 +47,10 @@ struct RootView: View {
         _reservationViewModel = StateObject(
             wrappedValue: ReservationViewModel(
                 service: reservationService,
+                actionQueue: actionQueue,
                 locationService: locationService,
-                parkedCarStore: parkedCarStore
+                parkedCarStore: parkedCarStore,
+                networkMonitor: networkMonitor
             )
         )
     }
@@ -125,6 +128,7 @@ struct RootView: View {
                 return
             }
             showSignIn = false
+            reservationViewModel.setUser(id: authViewModel.user?.id)
             await reservationViewModel.loadActive()
             await reservationViewModel.loadHistory()
         }

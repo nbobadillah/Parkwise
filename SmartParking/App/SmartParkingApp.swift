@@ -49,7 +49,8 @@ struct SmartParkingApp: App {
                         reservationService: reservationService,
                         locationService: locationService,
                         parkedCarStore: parkedCarStore,
-                        networkMonitor: networkMonitor
+                        networkMonitor: networkMonitor,
+                        actionQueue: actionQueue
                     )
                 }
             }
