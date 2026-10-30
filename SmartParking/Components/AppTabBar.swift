@@ -36,23 +36,25 @@ struct AppTabBar: View {
                 Button {
                     selection = tab
                 } label: {
-                    VStack(spacing: 6) {
-                        Capsule()
+                    VStack(spacing: 0) {
+                        Rectangle()
                             .fill(selection == tab ? Palette.accent : Color.clear)
-                            .frame(width: 30, height: 3)
+                            .frame(width: 32, height: 2)
                         Image(systemName: tab.icon)
-                            .font(.system(size: 19, weight: .regular))
+                            .font(.system(size: 20, weight: .regular))
+                            .padding(.top, 8)
                         Text(tab.title)
-                            .font(.system(size: 11, weight: selection == tab ? .semibold : .regular))
+                            .font(.system(size: 11, weight: .medium))
+                            .padding(.top, 4)
+                            .padding(.bottom, 8)
                     }
                     .foregroundStyle(selection == tab ? Palette.accent : Palette.muted)
                     .frame(maxWidth: .infinity)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
         }
-        .padding(.top, 4)
-        .padding(.bottom, 6)
         .background(Palette.card)
         .overlay(alignment: .top) {
             Rectangle()

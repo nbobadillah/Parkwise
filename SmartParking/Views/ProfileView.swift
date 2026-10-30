@@ -6,113 +6,173 @@ struct ProfileView: View {
     @State private var isConfirmingSignOut = false
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                if let user = viewModel.user {
-                    VStack(spacing: 12) {
-                        Text(user.initials)
-                            .font(.system(size: 26, weight: .bold))
-                            .foregroundStyle(Palette.accent)
-                            .frame(width: 76, height: 76)
-                            .background(Circle().fill(Palette.accentSoft))
-                        Text(user.displayName.isEmpty ? "Parkwise user" : user.displayName)
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundStyle(Palette.ink)
-                        Text(user.email)
-                            .font(.system(size: 15))
-                            .foregroundStyle(Palette.muted)
+        VStack(spacing: 0) {
+            ScreenHeader(title: "Profile")
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    if let user = viewModel.user {
+                        userCard(user)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(24)
-                    .cardStyle()
-                }
 
-                historySection
+                    SectionLabel(text: "Reservation history")
+                        .padding(.top, 24)
+                    historyCard
+                        .padding(.top, 8)
 
-                if let message = viewModel.errorMessage {
-                    AuthBanner(message: message, isError: true)
-                }
-
-                Button(role: .destructive) {
-                    isConfirmingSignOut = true
-                } label: {
-                    Label("Sign out", systemImage: "rectangle.portrait.and.arrow.right")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(Palette.redInk)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 52)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(Palette.redSoft)
-                        )
-                }
-                .buttonStyle(.plain)
-                .confirmationDialog("Sign out of Parkwise?", isPresented: $isConfirmingSignOut, titleVisibility: .visible) {
-                    Button("Sign out", role: .destructive) {
-                        viewModel.signOut()
+                    if let message = viewModel.errorMessage {
+                        NoticeBox(message: message)
+                            .padding(.top, 8)
                     }
-                    Button("Cancel", role: .cancel) {}
-                } message: {
-                    Text("You can keep browsing as a guest and sign in again anytime.")
+
+                    Button {
+                        isConfirmingSignOut = true
+                    } label: {
+                        Label("Log out", systemImage: "rectangle.portrait.and.arrow.right")
+                            .font(AppFont.button)
+                            .foregroundStyle(Palette.redInk)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 48)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: Radius.small, style: .continuous)
+                                    .stroke(Palette.redInk, lineWidth: 1)
+                            )
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, 24)
                 }
+                .padding(16)
+                .padding(.top, 8)
             }
-            .padding(24)
+            .refreshable { await reservationViewModel.loadHistory() }
         }
         .background(Palette.screen)
+        .alert("Log out now?", isPresented: $isConfirmingSignOut) {
+            Button("Stay", role: .cancel) {}
+            Button("Log out", role: .destructive) {
+                viewModel.signOut()
+            }
+        } message: {
+            Text("You can keep browsing as a guest and log in again anytime.")
+        }
     }
 
-    private var historySection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Reservation history")
-                .font(.system(size: 17, weight: .bold))
-                .foregroundStyle(Palette.ink)
+    private func userCard(_ user: AppUser) -> some View {
+        HStack(spacing: 16) {
+            Text(user.initials)
+                .font(AppFont.heading1)
+                .foregroundStyle(.white)
+                .frame(width: 48, height: 48)
+                .background(Circle().fill(Palette.accent))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(user.displayName.isEmpty ? "Parkwise user" : user.displayName)
+                    .font(AppFont.heading1)
+                    .foregroundStyle(Palette.ink)
+                    .lineLimit(1)
+                Text(user.email)
+                    .font(AppFont.caption)
+                    .foregroundStyle(Palette.muted)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(16)
+        .cardStyle()
+    }
 
+    private var historyCard: some View {
+        ReservationHistoryCard(reservations: reservationViewModel.history)
+    }
+}
+
+struct ScreenHeader: View {
+    let title: String
+
+    var body: some View {
+        Text(title)
+            .font(AppFont.display)
+            .foregroundStyle(Palette.ink)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 16)
+            .padding(.top, 24)
+            .padding(.bottom, 16)
+            .background(Palette.card)
+            .overlay(alignment: .bottom) {
+                Rectangle()
+                    .fill(Palette.line)
+                    .frame(height: 1)
+            }
+    }
+}
+
+struct ReservationHistoryCard: View {
+    let reservations: [Reservation]
+
+    var body: some View {
+        if reservations.isEmpty {
+            Text("No reservations yet")
+                .font(AppFont.caption)
+                .foregroundStyle(Palette.muted)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(16)
+                .cardStyle()
+        } else {
             VStack(spacing: 0) {
-                if reservationViewModel.history.isEmpty {
-                    Text("No reservation history")
-                        .font(.system(size: 14))
-                        .foregroundStyle(Palette.muted)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(14)
-                } else {
-                    ForEach(reservationViewModel.history) { reservation in
-                        ProfileHistoryRow(reservation: reservation)
+                ForEach(Array(reservations.enumerated()), id: \.element.id) { index, reservation in
+                    ReservationHistoryRow(reservation: reservation)
+                    if index < reservations.count - 1 {
+                        Rectangle()
+                            .fill(Palette.line)
+                            .frame(height: 1)
                     }
                 }
             }
-            .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Palette.card)
-            )
+            .cardStyle()
         }
     }
 }
 
-private struct ProfileHistoryRow: View {
+private struct ReservationHistoryRow: View {
     let reservation: Reservation
 
-    private var isGood: Bool {
-        reservation.status == .fulfilled || reservation.status == .released
+    var body: some View {
+        HStack(spacing: 16) {
+            badge
+            Text("Spot \(reservation.spotCode) · \(reservation.levelCode)")
+                .font(AppFont.body)
+                .foregroundStyle(Palette.ink)
+                .lineLimit(1)
+            Spacer(minLength: 8)
+            Text(reservation.createdAt.formatted(.dateTime.month(.abbreviated).day()))
+                .font(AppFont.monoData)
+                .foregroundStyle(Palette.muted)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Spot \(reservation.spotCode), \(reservation.levelCode), \(reservation.status.rawValue)")
     }
 
-    var body: some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(reservation.spotCode)
-                    .font(.system(size: 16, weight: .bold, design: .monospaced))
-                    .foregroundStyle(Palette.ink)
-
-                Text("\(reservation.levelCode) · \(reservation.createdAt.formatted(date: .abbreviated, time: .shortened))")
-                    .font(.system(size: 13))
-                    .foregroundStyle(Palette.muted)
+    private var badge: some View {
+        let (icon, color, background): (String, Color, Color) = {
+            switch reservation.status {
+            case .fulfilled, .released: return ("checkmark", Palette.greenInk, Palette.greenSoft)
+            case .expired: return ("xmark", Palette.redInk, Palette.redSoft)
+            case .cancelled: return ("minus", Palette.muted, Palette.screen)
+            case .active: return ("clock", Palette.accent, Palette.accentSoft)
             }
-
-            Spacer()
-
-            Text(reservation.status.rawValue.capitalized)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(isGood ? Palette.greenInk : Palette.muted)
-        }
-        .padding(14)
+        }()
+        return Image(systemName: icon)
+            .font(.system(size: 11, weight: .bold))
+            .foregroundStyle(color)
+            .frame(width: 24, height: 24)
+            .background(
+                RoundedRectangle(cornerRadius: Radius.badge, style: .continuous)
+                    .fill(background)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: Radius.badge, style: .continuous)
+                    .stroke(color.opacity(0.5), lineWidth: 1)
+            )
     }
 }

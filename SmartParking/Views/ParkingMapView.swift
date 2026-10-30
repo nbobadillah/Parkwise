@@ -8,6 +8,7 @@ struct ParkingMapView: View {
 
     @ObservedObject private var networkMonitor: NetworkMonitor
     @StateObject private var viewModel: ParkingMapViewModel
+    @State private var highlightFilters: [FindSpotFilter] = []
 
     init(
         levelCode: Binding<String>,
@@ -58,19 +59,21 @@ struct ParkingMapView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .bottom) {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .top, spacing: 8) {
                 VStack(alignment: .leading, spacing: 2) {
                     SectionLabel(text: "Level")
-                    Text(levels.first { $0.code == levelCode }?.shortTitle ?? levelCode)
-                        .font(.system(size: 25, weight: .bold))
+                    Text("Level \(levelCode)")
+                        .font(AppFont.display)
                         .foregroundStyle(Palette.ink)
+                        .lineLimit(1)
                     if viewModel.fromCache, let fetchedAt = viewModel.fetchedAt {
                         SavedPill(savedAt: fetchedAt)
+                            .padding(.top, 4)
                     }
                 }
-                Spacer()
-                HStack(spacing: 8) {
+                Spacer(minLength: 0)
+                HStack(spacing: 4) {
                     ForEach(levels) { level in
                         LevelChip(code: level.code, isSelected: level.code == levelCode) {
                             levelCode = level.code
@@ -79,16 +82,28 @@ struct ParkingMapView: View {
                 }
             }
 
-            HStack(spacing: 14) {
-                LegendDot(title: "Free", fill: Palette.greenSoft, stroke: Palette.greenInk.opacity(0.35))
-                LegendDot(title: "Taken", fill: Palette.neutral, stroke: Palette.line)
-                LegendDot(title: "Reserved", fill: Palette.amberSoft, stroke: Palette.amberInk.opacity(0.4))
-                LegendDot(title: "You", fill: Palette.accentSoft, stroke: Palette.accent)
+            SpotLegend()
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(FindSpotFilter.allCases) { filter in
+                        ChoiceChip(
+                            title: filter.rawValue,
+                            isSelected: highlightFilters.contains(filter),
+                            selectedColor: Self.highlightColor(for: filter)
+                        ) {
+                            if let index = highlightFilters.firstIndex(of: filter) {
+                                highlightFilters.remove(at: index)
+                            } else {
+                                highlightFilters.append(filter)
+                            }
+                        }
+                    }
+                }
+                .padding(.vertical, 2)
             }
         }
-        .padding(.horizontal, 18)
-        .padding(.top, 10)
-        .padding(.bottom, 14)
+        .padding(16)
         .background(Palette.card)
         .overlay(alignment: .bottom) {
             Rectangle()
@@ -99,31 +114,45 @@ struct ParkingMapView: View {
 
     private var grid: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 16) {
+                if !networkMonitor.isConnected {
+                    OfflineNotice(savedAt: viewModel.fetchedAt)
+                }
+                if let message = viewModel.errorMessage, viewModel.zones.isEmpty {
+                    NoticeBox(message: message, tone: .danger, icon: "exclamationmark.circle")
+                }
                 EntranceBar()
                 ForEach(viewModel.zones) { zone in
-                    VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 8) {
                         ZoneHeader(name: zone.name)
                         LaneDivider()
                         ForEach(zone.rows) { row in
-                            HStack(spacing: 9) {
-                                Text("\(row.index)")
-                                    .font(.system(size: 12, weight: .medium))
-                                    .foregroundStyle(Palette.muted)
-                                    .frame(width: 12, alignment: .leading)
-                                ForEach(row.spots) { spot in
-                                    SpotCell(spot: spot, isSelected: spot.id == viewModel.selectedSpotID) {
-                                        viewModel.selectedSpotID = spot.id
-                                    }
-                                }
+                            SpotRow(
+                                row: row,
+                                selectedSpotID: viewModel.selectedSpotID,
+                                highlight: highlight(for:)
+                            ) { spot in
+                                viewModel.selectedSpotID = spot.id
                             }
                         }
                     }
                 }
             }
-            .padding(.horizontal, 18)
-            .padding(.top, 16)
-            .padding(.bottom, viewModel.selectedSpot == nil ? 24 : 190)
+            .padding(16)
+            .padding(.bottom, viewModel.selectedSpot == nil ? 8 : 180)
+        }
+    }
+
+    private func highlight(for spot: ParkingSpot) -> Color? {
+        highlightFilters.first { spot.matches($0) }.map(Self.highlightColor(for:))
+    }
+
+    static func highlightColor(for filter: FindSpotFilter) -> Color {
+        switch filter {
+        case .available: return Palette.greenInk
+        case .vip: return Palette.violetInk
+        case .electric: return Palette.accentHover
+        case .accessible: return Palette.amberText
         }
     }
 }
@@ -138,61 +167,59 @@ struct SelectedSpotSheet: View {
         VStack(spacing: 16) {
             Capsule()
                 .fill(Palette.line)
-                .frame(width: 44, height: 4)
+                .frame(width: 36, height: 4)
 
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .bottom) {
+                VStack(alignment: .leading, spacing: 2) {
                     SectionLabel(text: "Selected spot")
                     Text(spot.code)
-                        .font(.system(size: 30, weight: .bold, design: .monospaced))
+                        .font(.system(size: 28, weight: .medium, design: .monospaced))
                         .foregroundStyle(Palette.accent)
                 }
                 Spacer()
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text("Walk from entrance")
-                        .font(.system(size: 13))
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("Walk to destination")
+                        .font(AppFont.caption)
                         .foregroundStyle(Palette.muted)
                     Text("~\(spot.walkMinutes) min")
-                        .font(.system(size: 22, weight: .bold))
+                        .font(.system(size: 18, weight: .semibold))
                         .foregroundStyle(Palette.ink)
                 }
             }
 
-            HStack(spacing: 12) {
-                Button(action: onReserve) {
-                    Text(isReserved ? "Spot reserved" : "Reserve this spot")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 52)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(isReserved ? Palette.greenInk : Palette.accent)
-                        )
-                }
-                .buttonStyle(.plain)
-                .disabled(isReserved)
+            HStack(spacing: 8) {
+                PrimaryButton(
+                    title: isReserved ? "Spot reserved" : "Reserve this spot",
+                    isLoading: false,
+                    isEnabled: !isReserved,
+                    action: onReserve
+                )
 
                 Button(action: onClose) {
                     Image(systemName: "xmark")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(Palette.muted)
-                        .frame(width: 52, height: 52)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(Palette.neutral)
+                        .frame(width: 48, height: 48)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: Radius.small, style: .continuous)
+                                .stroke(Palette.line, lineWidth: 1)
                         )
                 }
                 .buttonStyle(.plain)
             }
         }
-        .padding(18)
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
+        .padding(.bottom, 16)
         .background(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
+            UnevenRoundedRectangle(topLeadingRadius: 16, topTrailingRadius: 16, style: .continuous)
                 .fill(Palette.card)
-                .shadow(color: Palette.ink.opacity(0.12), radius: 18, y: -4)
         )
-        .padding(.horizontal, 8)
-        .padding(.bottom, 8)
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(Palette.line)
+                .frame(height: 1)
+                .padding(.horizontal, 16)
+        }
     }
 }

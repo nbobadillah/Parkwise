@@ -21,6 +21,7 @@ final class HomeViewModel: ObservableObject {
     @Published private(set) var recommendationFetchedAt: Date?
     @Published private(set) var recommendationFromCache = false
     @Published private(set) var forecast: PredictionsResponse?
+    @Published private(set) var forecastFromCache = false
     @Published private(set) var isLoadingForecast = false
     @Published private(set) var nearbyLots: [NearbyLot] = []
     @Published private(set) var isLoadingNearbyLots = false
@@ -51,12 +52,26 @@ final class HomeViewModel: ObservableObject {
         selectedBuildingID = defaults.string(forKey: selectedBuildingKey)
     }
 
-    var forecastLevelCode: String? {
-        recommendation?.recommended ?? forecast?.levels.first?.code
+    var arrivalHour: Int {
+        Calendar.current.component(.hour, from: arrivalAt)
     }
 
-    var forecastPoints: [PredictionPoint] {
-        forecast?.levels.first { $0.code == forecastLevelCode }?.points ?? []
+    var forecastHours: [HourlyOccupancy] {
+        guard let forecast else { return [] }
+        var sums = [Double](repeating: 0, count: 24)
+        var counts = [Int](repeating: 0, count: 24)
+        for level in forecast.levels {
+            for point in level.points {
+                guard let occupancy = point.occupancy, let hour = Int(point.slot.prefix(2)), (0..<24).contains(hour) else { continue }
+                sums[hour] += occupancy
+                counts[hour] += 1
+            }
+        }
+        guard counts.contains(where: { $0 > 0 }) else { return [] }
+        let start = min(max(arrivalHour - 1, 0), 16)
+        return (start..<start + 8).map { hour in
+            HourlyOccupancy(hour: hour, occupancy: counts[hour] == 0 ? nil : sums[hour] / Double(counts[hour]))
+        }
     }
 
     var destinationID: String? {
@@ -217,7 +232,9 @@ final class HomeViewModel: ObservableObject {
     func loadForecast() async {
         isLoadingForecast = true
         defer { isLoadingForecast = false }
-        forecast = try? await service.predictions(level: nil, date: arrivalAt).value
+        let loaded = try? await service.predictions(level: nil, date: arrivalAt)
+        forecast = loaded?.value
+        forecastFromCache = loaded?.fromCache ?? false
     }
 
     func loadNearbyLots() async {

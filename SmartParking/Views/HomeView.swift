@@ -3,29 +3,64 @@ import SwiftUI
 struct HomeView: View {
     @EnvironmentObject private var authViewModel: AuthViewModel
     @ObservedObject var viewModel: HomeViewModel
+    @ObservedObject private var networkMonitor = NetworkMonitor.shared
     let onOpenLevel: (LevelSummary) -> Void
-    let onFindSpot: () -> Void
+    let onFindSpot: (FindSpotFilter) -> Void
     let onFindCar: () -> Void
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 22) {
+            VStack(alignment: .leading, spacing: 0) {
                 header
+
+                if !networkMonitor.isConnected {
+                    OfflineNotice(savedAt: viewModel.fetchedAt)
+                        .padding(.top, 16)
+                }
+
+                SectionLabel(text: "Destination")
+                    .padding(.top, 24)
                 destinationPicker
+                    .padding(.top, 8)
+
                 ForecastCard(
-                    points: viewModel.forecastPoints,
-                    levelCode: viewModel.forecastLevelCode,
+                    hours: viewModel.forecastHours,
+                    currentHour: viewModel.arrivalHour,
+                    isLive: viewModel.forecast != nil && !viewModel.forecastFromCache,
                     isLoading: viewModel.isLoadingForecast
                 )
-                recommendation
-                levelList
+                .padding(.top, 16)
+
+                SectionLabel(text: "Parking levels")
+                    .padding(.top, 24)
+                RecommendationCard(
+                    recommendation: viewModel.recommendation,
+                    savedAt: viewModel.recommendationFromCache ? viewModel.recommendationFetchedAt : nil,
+                    arrivalAt: $viewModel.arrivalAt
+                )
+                .padding(.top, 8)
+
+                VStack(spacing: 8) {
+                    ForEach(viewModel.levels) { level in
+                        LevelCard(level: level, isRecommended: level.code == viewModel.recommendation?.recommended) {
+                            onOpenLevel(level)
+                        }
+                    }
+                }
+                .padding(.top, 8)
+
                 actions
+                    .padding(.top, 16)
             }
-            .padding(.horizontal, 18)
-            .padding(.top, 10)
-            .padding(.bottom, 26)
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
+            .padding(.bottom, 24)
         }
         .background(Palette.screen)
+        .refreshable {
+            await viewModel.loadLevels(isAuthenticated: authViewModel.isAuthenticated)
+            await viewModel.loadArrivalData()
+        }
         .task {
             await viewModel.loadBuildings()
             if NetworkMonitor.shared.isConnected {
@@ -33,25 +68,6 @@ struct HomeView: View {
             }
         }
         .task(id: viewModel.arrivalAt) { await viewModel.loadArrivalData() }
-    }
-
-    private var header: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(greeting)
-                    .font(.system(size: 15))
-                    .foregroundStyle(Palette.muted)
-                Text(authViewModel.user?.displayName ?? "Guest")
-                    .font(.system(size: 26, weight: .bold))
-                    .foregroundStyle(Palette.ink)
-            }
-            Spacer()
-            Text(authViewModel.user?.initials ?? "G")
-                .font(.system(size: 15, weight: .bold))
-                .foregroundStyle(.white)
-                .frame(width: 46, height: 46)
-                .background(Circle().fill(Palette.accent))
-        }
     }
 
     private var greeting: String {
@@ -62,11 +78,35 @@ struct HomeView: View {
         }
     }
 
+    private var header: some View {
+        HStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(greeting)
+                    .font(AppFont.caption)
+                    .foregroundStyle(Palette.muted)
+                Text(authViewModel.user?.displayName ?? "Guest")
+                    .font(AppFont.display)
+                    .foregroundStyle(Palette.ink)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 0)
+            Text(authViewModel.user?.initials ?? "G")
+                .font(AppFont.heading2)
+                .foregroundStyle(.white)
+                .frame(width: 36, height: 36)
+                .background(Circle().fill(Palette.accent))
+        }
+    }
+
+    @ViewBuilder
     private var destinationPicker: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            SectionLabel(text: "Destination")
+        if viewModel.buildings.isEmpty {
+            Text("Destinations unavailable")
+                .font(AppFont.caption)
+                .foregroundStyle(Palette.muted)
+        } else {
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
+                HStack(spacing: 8) {
                     ForEach(viewModel.buildings) { building in
                         ChoiceChip(title: building.name, isSelected: viewModel.selectedBuildingID == building.id) {
                             viewModel.selectBuilding(id: building.id)
@@ -78,42 +118,33 @@ struct HomeView: View {
         }
     }
 
-    private var recommendation: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            SectionLabel(text: "Recommended level")
-            RecommendationCard(
-                recommendation: viewModel.recommendation,
-                savedAt: viewModel.recommendationFromCache ? viewModel.recommendationFetchedAt : nil,
-                arrivalAt: $viewModel.arrivalAt
-            )
-        }
-    }
-
-    private var levelList: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            SectionLabel(text: "Parking levels")
-            ForEach(viewModel.levels) { level in
-                LevelCard(level: level) {
-                    onOpenLevel(level)
-                }
-            }
-        }
-    }
-
     private var actions: some View {
-        HStack(spacing: 12) {
-            QuickAction(
-                title: "Find a spot",
-                icon: "magnifyingglass",
-                tint: Tint(soft: Palette.accentSoft, strong: Palette.accent),
-                action: onFindSpot
-            )
-            QuickAction(
-                title: "Find my car",
-                icon: "car.fill",
-                tint: Tint(soft: Palette.violetSoft, strong: Palette.violetInk),
-                action: onFindCar
-            )
+        VStack(spacing: 8) {
+            HStack(spacing: 8) {
+                QuickAction(
+                    title: "Find a spot",
+                    icon: "magnifyingglass",
+                    tint: Tint(soft: Palette.accentSoft, strong: Palette.accent)
+                ) { onFindSpot(.available) }
+                QuickAction(
+                    title: "Find my car",
+                    icon: "car",
+                    tint: Tint(soft: Palette.violetSoft, strong: Palette.violetInk),
+                    action: onFindCar
+                )
+            }
+            HStack(spacing: 8) {
+                QuickAction(
+                    title: "Accessible",
+                    icon: "figure.roll",
+                    tint: Tint(soft: Palette.accentSoft, strong: Palette.accent)
+                ) { onFindSpot(.accessible) }
+                QuickAction(
+                    title: "EV spots",
+                    icon: "bolt.fill",
+                    tint: Tint(soft: Palette.amberSoft, strong: Palette.amberText)
+                ) { onFindSpot(.electric) }
+            }
         }
     }
 }

@@ -3,7 +3,7 @@ import UIKit
 
 enum HomeRoute {
     case dashboard
-    case findSpot
+    case findSpot(FindSpotFilter)
 }
 
 enum MapRoute {
@@ -55,20 +55,24 @@ struct RootView: View {
     var body: some View {
         VStack(spacing: 0) {
             if serverStatus.isWaking {
-                HStack(spacing: 10) {
+                HStack(spacing: 8) {
                     ProgressView()
                         .tint(Palette.accent)
                     Text("Waking up the server. This can take up to a minute.")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(AppFont.body)
                         .foregroundStyle(Palette.accent)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .padding(12)
+                .padding(16)
                 .background(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
                         .fill(Palette.accentSoft)
                 )
-                .padding(.horizontal, 12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+                        .stroke(Palette.accent.opacity(0.3), lineWidth: 1)
+                )
+                .padding(.horizontal, 16)
                 .padding(.top, 8)
                 .padding(.bottom, 4)
             }
@@ -197,22 +201,24 @@ struct RootView: View {
                             mapRoute = .floor
                             tab = .map
                         },
-                        onFindSpot: { homeRoute = .findSpot },
+                        onFindSpot: { filter in homeRoute = .findSpot(filter) },
                         onFindCar: {
                             mapRoute = .findCar
                             tab = .map
                         }
                     )
-                case .findSpot:
+                case .findSpot(let filter):
                     FindSpotView(
                         levels: homeViewModel.levels,
                         destinationID: homeViewModel.destinationID,
                         service: parkingService,
-                        networkMonitor: networkMonitor
+                        networkMonitor: networkMonitor,
+                        initialFilter: filter
                     ) { spot in
                         selectedSpot = spot
                         tab = .reserve
                     }
+                    .id(filter)
                 }
             }
         case .map:
@@ -236,7 +242,8 @@ struct RootView: View {
                         parkingService: parkingService,
                         locationService: locationService,
                         destinationID: homeViewModel.destinationID,
-                        networkMonitor: networkMonitor
+                        networkMonitor: networkMonitor,
+                        onOpenReserve: { tab = .reserve }
                     )
                 } else {
                     SignInPromptView(
@@ -250,7 +257,19 @@ struct RootView: View {
             if authViewModel.isAuthenticated {
                 ReserveSpotView(
                     selectedSpot: selectedSpot,
-                    viewModel: reservationViewModel
+                    viewModel: reservationViewModel,
+                    onOpenMap: {
+                        mapRoute = .floor
+                        tab = .map
+                    },
+                    onFindSpot: {
+                        homeRoute = .findSpot(.available)
+                        tab = .home
+                    },
+                    onFindCar: {
+                        mapRoute = .findCar
+                        tab = .map
+                    }
                 )
             } else {
                 SignInPromptView(
@@ -281,17 +300,18 @@ struct PlaceholderView: View {
     let icon: String
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 8) {
             Image(systemName: icon)
-                .font(.system(size: 28, weight: .light))
+                .font(.system(size: 22, weight: .regular))
                 .foregroundStyle(Palette.accent)
-                .frame(width: 64, height: 64)
+                .frame(width: 56, height: 56)
                 .background(Circle().fill(Palette.accentSoft))
             Text(title)
-                .font(.system(size: 20, weight: .bold))
+                .font(AppFont.display)
                 .foregroundStyle(Palette.ink)
+                .padding(.top, 8)
             Text(message)
-                .font(.system(size: 15))
+                .font(AppFont.caption)
                 .foregroundStyle(Palette.muted)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 280)
@@ -308,23 +328,24 @@ struct SignInPromptView: View {
     let onSignIn: () -> Void
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 8) {
             Image(systemName: icon)
-                .font(.system(size: 28, weight: .light))
+                .font(.system(size: 22, weight: .regular))
                 .foregroundStyle(Palette.accent)
-                .frame(width: 64, height: 64)
+                .frame(width: 56, height: 56)
                 .background(Circle().fill(Palette.accentSoft))
             Text(title)
-                .font(.system(size: 20, weight: .bold))
+                .font(AppFont.display)
                 .foregroundStyle(Palette.ink)
+                .padding(.top, 8)
             Text(message)
-                .font(.system(size: 15))
+                .font(AppFont.caption)
                 .foregroundStyle(Palette.muted)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 280)
-            PrimaryButton(title: "Sign in or create account", isLoading: false, isEnabled: true, action: onSignIn)
+            PrimaryButton(title: "Log in or create account", isLoading: false, isEnabled: true, action: onSignIn)
                 .frame(maxWidth: 320)
-                .padding(.top, 12)
+                .padding(.top, 16)
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
