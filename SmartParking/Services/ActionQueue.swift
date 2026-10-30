@@ -12,6 +12,7 @@ protocol ActionQueueing: AnyObject {
     var failures: AnyPublisher<ActionQueueFailure, Never> { get }
     func enqueue(_ kind: PendingActionKind, reservationId: String) async throws
     func drain() async
+    func pending() async -> [QueuedAction]
 }
 
 @MainActor
@@ -29,7 +30,7 @@ final class ActionQueue: ActionQueueing {
     private let service: ReservationServicing
     private let failureSubject = PassthroughSubject<ActionQueueFailure, Never>()
     private var connectivity: AnyCancellable?
-    private var isDraining = false
+    private var drainTask: Task<Void, Never>?
 
     var failures: AnyPublisher<ActionQueueFailure, Never> {
         failureSubject.eraseToAnyPublisher()
@@ -51,11 +52,18 @@ final class ActionQueue: ActionQueueing {
     }
 
     func drain() async {
-        guard !isDraining else { return }
-        isDraining = true
-        defer { isDraining = false }
+        if let drainTask {
+            await drainTask.value
+            return
+        }
+        let task = Task { _ = try? await drainPending() }
+        drainTask = task
+        await task.value
+        drainTask = nil
+    }
 
-        try? await drainPending()
+    func pending() async -> [QueuedAction] {
+        (try? await store.pending()) ?? []
     }
 
     private func drainPending() async throws {
