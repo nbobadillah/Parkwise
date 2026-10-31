@@ -122,6 +122,13 @@ struct ProfileView: View {
         }
     }
 
+    private func retryAction(_ action: QueuedAction) {
+        Task {
+            await actionQueue.retry(id: action.id)
+            await loadPendingActions()
+        }
+    }
+
     private func userCard(_ user: AppUser) -> some View {
         HStack(spacing: 16) {
             Text(user.initials)
@@ -154,13 +161,23 @@ struct ProfileView: View {
                 QueueActionRow(
                     title: actionTitle(action.kind),
                     subtitle: "Reservation \(action.reservationId)",
-                    date: action.createdAt,
-                    icon: "arrow.triangle.2.circlepath",
-                    color: Palette.accent,
-                    background: Palette.accentSoft,
-                    detail: action.attempts > 0
-                        ? "\(action.attempts) synchronization attempts"
-                        : "Waiting for connection"
+                    date: action.failedAt ?? action.createdAt,
+                    icon: action.isFailed
+                        ? "exclamationmark.circle"
+                        : "arrow.triangle.2.circlepath",
+                    color: action.isFailed
+                        ? Palette.redInk
+                        : Palette.accent,
+                    background: action.isFailed
+                        ? Palette.redSoft
+                        : Palette.accentSoft,
+                    detail: action.failureMessage
+                        ?? (action.attempts > 0
+                            ? "\(action.attempts) synchronization attempts"
+                            : "Waiting for connection"),
+                    retryAction: action.isFailed
+                        ? { retryAction(action) }
+                        : nil
                 )
 
                 if index < pendingActions.count - 1 {
@@ -218,46 +235,66 @@ private struct QueueActionRow: View {
     let color: Color
     let background: Color
     let detail: String
+    var retryAction: (() -> Void)? = nil
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(color)
-                .frame(width: 30, height: 30)
-                .background(
-                    RoundedRectangle(
-                        cornerRadius: Radius.badge,
-                        style: .continuous
-                    )
-                    .fill(background)
-                )
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(AppFont.body)
-                    .foregroundStyle(Palette.ink)
-
-                Text(subtitle)
-                    .font(AppFont.caption)
-                    .foregroundStyle(Palette.muted)
-
-                Text(detail)
-                    .font(AppFont.caption)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: icon)
+                    .font(.system(size: 13, weight: .bold))
                     .foregroundStyle(color)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(width: 30, height: 30)
+                    .background(
+                        RoundedRectangle(
+                            cornerRadius: Radius.badge,
+                            style: .continuous
+                        )
+                        .fill(background)
+                    )
 
-                if let date {
-                    Text(date.formatted(date: .abbreviated, time: .shortened))
-                        .font(AppFont.monoData)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(AppFont.body)
+                        .foregroundStyle(Palette.ink)
+
+                    Text(subtitle)
+                        .font(AppFont.caption)
                         .foregroundStyle(Palette.muted)
+
+                    Text(detail)
+                        .font(AppFont.caption)
+                        .foregroundStyle(color)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    if let date {
+                        Text(date.formatted(date: .abbreviated, time: .shortened))
+                            .font(AppFont.monoData)
+                            .foregroundStyle(Palette.muted)
+                    }
                 }
+
+                Spacer(minLength: 0)
             }
 
-            Spacer(minLength: 0)
+            if let retryAction {
+                Button(action: retryAction) {
+                    Label("Retry", systemImage: "arrow.clockwise")
+                        .font(AppFont.button)
+                        .foregroundStyle(Palette.accent)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 40)
+                        .overlay(
+                            RoundedRectangle(
+                                cornerRadius: Radius.small,
+                                style: .continuous
+                            )
+                            .stroke(Palette.accent, lineWidth: 1)
+                        )
+                }
+                .buttonStyle(.plain)
+            }
         }
         .padding(16)
-        .accessibilityElement(children: .combine)
     }
 }
 

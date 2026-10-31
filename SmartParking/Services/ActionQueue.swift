@@ -19,9 +19,11 @@ protocol ActionQueueing: AnyObject {
     var completions: AnyPublisher<[ActionQueueCompletion], Never> { get }
     var pendingChanges: AnyPublisher<[QueuedAction], Never> { get }
 
+    func setActiveUser(_ userId: String?)
     func enqueue(_ kind: PendingActionKind, reservationId: String) async throws
     func pendingActions() async throws -> [QueuedAction]
     func pendingActions(reservationId: String) async throws -> [QueuedAction]
+    func retry(id: UUID) async
     func drain() async
 }
 
@@ -40,12 +42,18 @@ final class ActionQueue: ActionQueueing {
     private let store: ActionQueueStore
     private let service: ReservationServicing
 
+    private var activeUserId: String?
+
     private let failureSubject = CurrentValueSubject<[ActionQueueFailure], Never>([])
     private let completionSubject = CurrentValueSubject<[ActionQueueCompletion], Never>([])
     private let pendingSubject = CurrentValueSubject<[QueuedAction], Never>([])
 
     private var connectivity: AnyCancellable?
+
+    // Identifica la ejecución de cola asociada a una sesión.
     private var drainTask: Task<Void, Never>?
+    private var drainTaskId: UUID?
+    private var drainTaskUserId: String?
 
     var failures: AnyPublisher<[ActionQueueFailure], Never> {
         failureSubject.eraseToAnyPublisher()
@@ -71,13 +79,43 @@ final class ActionQueue: ActionQueueing {
             .removeDuplicates()
             .filter { $0 }
             .sink { [weak self] _ in
-                Task {
+                Task { @MainActor in
                     await self?.drain()
                 }
             }
+    }
 
-        Task {
-            await refreshPending()
+    func setActiveUser(_ userId: String?) {
+        guard activeUserId != userId else {
+            return
+        }
+
+        activeUserId = userId
+
+        // No mostramos resultados de la cuenta anterior.
+        failureSubject.send([])
+        completionSubject.send([])
+        pendingSubject.send([])
+
+        // Invalidamos la ejecución anterior. Aunque la petición de red
+        // termine después, no podrá modificar acciones de otra sesión.
+        drainTask?.cancel()
+        drainTask = nil
+        drainTaskId = nil
+        drainTaskUserId = nil
+
+        guard let userId else {
+            return
+        }
+
+        Task { @MainActor in
+            await refreshPending(for: userId)
+
+            guard activeUserId == userId else {
+                return
+            }
+
+            await drain()
         }
     }
 
@@ -85,74 +123,206 @@ final class ActionQueue: ActionQueueing {
         _ kind: PendingActionKind,
         reservationId: String
     ) async throws {
-        try await store.enqueue(kind, reservationId: reservationId)
-        await refreshPending()
+        guard let userId = activeUserId else {
+            return
+        }
+
+        try await store.enqueue(
+            kind,
+            reservationId: reservationId,
+            userId: userId
+        )
+
+        await refreshPending(for: userId)
+
+        guard activeUserId == userId else {
+            return
+        }
+
+        await drain()
     }
 
     func pendingActions() async throws -> [QueuedAction] {
-        try await store.pending()
+        guard let userId = activeUserId else {
+            return []
+        }
+
+        return try await store.pending(userId: userId)
     }
 
     func pendingActions(
         reservationId: String
     ) async throws -> [QueuedAction] {
-        try await store.pending(reservationId: reservationId)
+        guard let userId = activeUserId else {
+            return []
+        }
+
+        return try await store.pending(
+            reservationId: reservationId,
+            userId: userId
+        )
+    }
+
+    func retry(id: UUID) async {
+        guard let userId = activeUserId else {
+            return
+        }
+
+        do {
+            try await store.retry(id: id, userId: userId)
+            await refreshPending(for: userId)
+
+            guard activeUserId == userId else {
+                return
+            }
+
+            await drain()
+        } catch {
+            await refreshPending(for: userId)
+        }
     }
 
     func drain() async {
-        if let existingTask = drainTask {
+        guard let userId = activeUserId else {
+            return
+        }
+
+        if let existingTask = drainTask,
+           drainTaskUserId == userId {
             await existingTask.value
             return
         }
 
-        let task = Task { [weak self] in
-            guard let self else { return }
+        // Si pertenece a otra sesión, no esperamos a que termine.
+        drainTask?.cancel()
+
+        let taskId = UUID()
+
+        let task = Task { @MainActor [weak self] in
+            guard let self else {
+                return
+            }
 
             do {
-                try await self.drainPending()
+                try await self.drainPending(
+                    userId: userId,
+                    taskId: taskId
+                )
             } catch {
-                await self.refreshPending()
+                await self.refreshPending(for: userId)
             }
         }
 
         drainTask = task
+        drainTaskId = taskId
+        drainTaskUserId = userId
+
         await task.value
-        drainTask = nil
+
+        // Una tarea antigua no debe limpiar el identificador
+        // de una ejecución nueva.
+        if drainTaskId == taskId {
+            drainTask = nil
+            drainTaskId = nil
+            drainTaskUserId = nil
+        }
     }
 
-    private func drainPending() async throws {
-        while let action = try await store.pending().first {
-            switch await attempt(action) {
+    private func drainPending(
+        userId: String,
+        taskId: UUID
+    ) async throws {
+        while isCurrentSession(userId, taskId: taskId) {
+            let actions = try await store.pending(userId: userId)
+
+            guard isCurrentSession(userId, taskId: taskId) else {
+                break
+            }
+
+            // Las acciones fallidas requieren reintento manual.
+            guard let action = actions.first(where: { !$0.isFailed }) else {
+                break
+            }
+
+            let outcome = await attempt(action)
+
+            guard isCurrentSession(userId, taskId: taskId) else {
+                break
+            }
+
+            switch outcome {
             case .completed:
-                try await store.remove(id: action.id)
+                try await store.remove(
+                    id: action.id,
+                    userId: userId
+                )
+
+                guard isCurrentSession(userId, taskId: taskId) else {
+                    break
+                }
 
                 reportCompletion(action)
-                await refreshPending()
+                await refreshPending(for: userId)
 
             case .rejected(let message):
-                try await store.remove(id: action.id)
+                try await store.markFailed(
+                    id: action.id,
+                    userId: userId,
+                    message: message
+                )
+
+                guard isCurrentSession(userId, taskId: taskId) else {
+                    break
+                }
 
                 reportFailure(action, message: message)
-                await refreshPending()
+                await refreshPending(for: userId)
 
             case .unauthorized:
-                await refreshPending()
+                await refreshPending(for: userId)
                 return
 
             case .failed(let message):
-                let attempts = try await store.incrementAttempts(id: action.id) ?? 0
+                let attempts = try await store.incrementAttempts(
+                    id: action.id,
+                    userId: userId
+                ) ?? 0
+
+                guard isCurrentSession(userId, taskId: taskId) else {
+                    break
+                }
 
                 if attempts >= Self.maxAttempts {
-                    try await store.remove(id: action.id)
+                    try await store.markFailed(
+                        id: action.id,
+                        userId: userId,
+                        message: message
+                    )
+
+                    guard isCurrentSession(userId, taskId: taskId) else {
+                        break
+                    }
+
                     reportFailure(action, message: message)
                 }
 
-                await refreshPending()
+                await refreshPending(for: userId)
+
+                // Esperamos a una próxima reconexión o reintento manual.
                 return
             }
         }
 
-        await refreshPending()
+        await refreshPending(for: userId)
+    }
+
+    private func isCurrentSession(
+        _ userId: String,
+        taskId: UUID
+    ) -> Bool {
+        activeUserId == userId &&
+        drainTaskId == taskId &&
+        !Task.isCancelled
     }
 
     private func attempt(_ action: QueuedAction) async -> Outcome {
@@ -179,11 +349,21 @@ final class ActionQueue: ActionQueueing {
         }
     }
 
-    private func refreshPending() async {
+    private func refreshPending(for userId: String) async {
+        guard activeUserId == userId else {
+            return
+        }
+
         do {
-            pendingSubject.send(try await store.pending())
+            let actions = try await store.pending(userId: userId)
+
+            guard activeUserId == userId else {
+                return
+            }
+
+            pendingSubject.send(actions)
         } catch {
-            // No reemplazamos el último estado conocido por una lista vacía.
+            // Conservamos el último estado conocido.
         }
     }
 

@@ -141,8 +141,12 @@ struct RootView: View {
                 )
             }
         }
-        .task(id: authViewModel.isAuthenticated) {
-            guard authViewModel.isAuthenticated else {
+        .task(id: authViewModel.user?.id) {
+            let userId = authViewModel.user?.id
+
+            actionQueue.setActiveUser(userId)
+
+            guard userId != nil else {
                 reservationViewModel.reset()
                 return
             }

@@ -7,6 +7,13 @@ struct QueuedAction: Equatable, Sendable {
     let reservationId: String
     let createdAt: Date
     let attempts: Int
+    let userId: String?
+    let failureMessage: String?
+    let failedAt: Date?
+
+    var isFailed: Bool {
+        failureMessage != nil
+    }
 }
 
 actor ActionQueueStore {
@@ -36,16 +43,20 @@ actor ActionQueueStore {
         )
     }
 
+    // MARK: - Enqueue
+
     func enqueue(
         _ kind: PendingActionKind,
-        reservationId: String
+        reservationId: String,
+        userId: String
     ) throws {
         let kindRawValue = kind.rawValue
 
         let duplicate = FetchDescriptor<PendingAction>(
             predicate: #Predicate {
                 $0.kindRawValue == kindRawValue &&
-                $0.reservationId == reservationId
+                $0.reservationId == reservationId &&
+                $0.userId == userId
             }
         )
 
@@ -56,33 +67,43 @@ actor ActionQueueStore {
         context.insert(
             PendingAction(
                 kind: kind,
-                reservationId: reservationId
+                reservationId: reservationId,
+                userId: userId
             )
         )
 
         try context.save()
     }
 
+    // MARK: - Fetch
+
+    // Legacy: devuelve todas las acciones.
+    // No utilizar para mostrar información de una sesión concreta.
     func pending() throws -> [QueuedAction] {
         let descriptor = FetchDescriptor<PendingAction>(
             sortBy: [SortDescriptor(\.createdAt)]
         )
 
-        return try context.fetch(descriptor).compactMap { action in
-            guard let kind = action.kind else {
-                return nil
-            }
-
-            return QueuedAction(
-                id: action.id,
-                kind: kind,
-                reservationId: action.reservationId,
-                createdAt: action.createdAt,
-                attempts: action.attempts
-            )
+        return try context.fetch(descriptor).compactMap {
+            makeQueuedAction(from: $0)
         }
     }
 
+    // Acciones pertenecientes a un usuario.
+    func pending(userId: String) throws -> [QueuedAction] {
+        let descriptor = FetchDescriptor<PendingAction>(
+            predicate: #Predicate {
+                $0.userId == userId
+            },
+            sortBy: [SortDescriptor(\.createdAt)]
+        )
+
+        return try context.fetch(descriptor).compactMap {
+            makeQueuedAction(from: $0)
+        }
+    }
+
+    // Legacy: filtra solo por reserva, no por usuario.
     func pending(reservationId: String) throws -> [QueuedAction] {
         let descriptor = FetchDescriptor<PendingAction>(
             predicate: #Predicate {
@@ -91,23 +112,34 @@ actor ActionQueueStore {
             sortBy: [SortDescriptor(\.createdAt)]
         )
 
-        return try context.fetch(descriptor).compactMap { action in
-            guard let kind = action.kind else {
-                return nil
-            }
-
-            return QueuedAction(
-                id: action.id,
-                kind: kind,
-                reservationId: action.reservationId,
-                createdAt: action.createdAt,
-                attempts: action.attempts
-            )
+        return try context.fetch(descriptor).compactMap {
+            makeQueuedAction(from: $0)
         }
     }
 
-    func remove(id: UUID) throws {
-        guard let action = try find(id: id) else {
+    // Acciones de una reserva pertenecientes a un usuario.
+    func pending(
+        reservationId: String,
+        userId: String
+    ) throws -> [QueuedAction] {
+        let descriptor = FetchDescriptor<PendingAction>(
+            predicate: #Predicate {
+                $0.reservationId == reservationId &&
+                $0.userId == userId
+            },
+            sortBy: [SortDescriptor(\.createdAt)]
+        )
+
+        return try context.fetch(descriptor).compactMap {
+            makeQueuedAction(from: $0)
+        }
+    }
+
+    // MARK: - Remove
+
+    func remove(id: UUID, userId: String) throws {
+        guard let action = try find(id: id),
+              action.userId == userId else {
             return
         }
 
@@ -115,8 +147,14 @@ actor ActionQueueStore {
         try context.save()
     }
 
-    func incrementAttempts(id: UUID) throws -> Int? {
-        guard let action = try find(id: id) else {
+    // MARK: - Attempts
+
+    func incrementAttempts(
+        id: UUID,
+        userId: String
+    ) throws -> Int? {
+        guard let action = try find(id: id),
+              action.userId == userId else {
             return nil
         }
 
@@ -125,6 +163,62 @@ actor ActionQueueStore {
 
         return action.attempts
     }
+
+    // MARK: - Failure
+
+    func markFailed(
+        id: UUID,
+        userId: String,
+        message: String
+    ) throws {
+        guard let action = try find(id: id),
+              action.userId == userId else {
+            return
+        }
+
+        action.failureMessage = message
+        action.failedAt = Date()
+
+        try context.save()
+    }
+
+    // MARK: - Retry
+
+    func retry(id: UUID, userId: String) throws {
+        guard let action = try find(id: id),
+              action.userId == userId else {
+            return
+        }
+
+        action.attempts = 0
+        action.failureMessage = nil
+        action.failedAt = nil
+
+        try context.save()
+    }
+
+    // MARK: - Mapping
+
+    private func makeQueuedAction(
+        from action: PendingAction
+    ) -> QueuedAction? {
+        guard let kind = action.kind else {
+            return nil
+        }
+
+        return QueuedAction(
+            id: action.id,
+            kind: kind,
+            reservationId: action.reservationId,
+            createdAt: action.createdAt,
+            attempts: action.attempts,
+            userId: action.userId,
+            failureMessage: action.failureMessage,
+            failedAt: action.failedAt
+        )
+    }
+
+    // MARK: - Internal lookup
 
     private func find(id: UUID) throws -> PendingAction? {
         var descriptor = FetchDescriptor<PendingAction>(
