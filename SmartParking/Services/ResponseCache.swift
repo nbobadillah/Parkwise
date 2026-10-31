@@ -14,34 +14,77 @@ final class ResponseCache {
 
     private let directory: URL
     private let encoder = JSONEncoder()
-    private let decoder = JSONDecoder()
-    private let queue = DispatchQueue(label: "com.parkwise.response-cache")
+    private let queue = DispatchQueue(
+        label: "com.parkwise.response-cache"
+    )
 
-    init(directory: URL = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0].appending(path: "ParkwiseCache")) {
+    init(
+        directory: URL = FileManager.default.urls(
+            for: .cachesDirectory,
+            in: .userDomainMask
+        )[0].appending(path: "ParkwiseCache")
+    ) {
         self.directory = directory
         encoder.dateEncodingStrategy = .iso8601
-        decoder.dateDecodingStrategy = .iso8601
     }
 
-    func save<Value: Codable>(_ value: Value, key: String, at date: Date = Date()) {
+    func save<Value: Codable>(
+        _ value: Value,
+        key: String,
+        at date: Date = Date()
+    ) {
         let url = fileURL(for: key)
+
         queue.async { [directory, encoder] in
-            try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-            guard let data = try? encoder.encode(Entry(savedAt: date, value: value)) else { return }
+            try? FileManager.default.createDirectory(
+                at: directory,
+                withIntermediateDirectories: true
+            )
+
+            guard let data = try? encoder.encode(
+                Entry(savedAt: date, value: value)
+            ) else {
+                return
+            }
+
             try? data.write(to: url, options: .atomic)
         }
     }
 
-    func load<Value: Codable>(_ type: Value.Type, key: String) -> Fetched<Value>? {
-        guard
-            let data = try? Data(contentsOf: fileURL(for: key)),
-            let entry = try? decoder.decode(Entry<Value>.self, from: data)
-        else { return nil }
-        return Fetched(value: entry.value, fetchedAt: entry.savedAt, fromCache: true)
+    func load<Value: Codable>(
+        _ type: Value.Type,
+        key: String
+    ) -> Fetched<Value>? {
+        queue.sync {
+            let url = fileURL(for: key)
+
+            guard let data = try? Data(contentsOf: url) else {
+                return nil
+            }
+
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+
+            guard let entry = try? decoder.decode(
+                Entry<Value>.self,
+                from: data
+            ) else {
+                return nil
+            }
+
+            return Fetched(
+                value: entry.value,
+                fetchedAt: entry.savedAt,
+                fromCache: true
+            )
+        }
     }
 
     private func fileURL(for key: String) -> URL {
-        let name = key.map { $0.isLetter || $0.isNumber ? $0 : "_" }
+        let name = key.map {
+            $0.isLetter || $0.isNumber ? $0 : "_"
+        }
+
         return directory.appending(path: String(name) + ".json")
     }
 }

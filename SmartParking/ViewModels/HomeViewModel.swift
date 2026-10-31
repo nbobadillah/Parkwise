@@ -25,6 +25,14 @@ final class HomeViewModel: ObservableObject {
     @Published private(set) var nearbyLots: [NearbyLot] = []
     @Published private(set) var isLoadingNearbyLots = false
     @Published private(set) var nearbyLotsErrorMessage: String?
+
+    // Accessible and EV spots
+    @Published private(set) var specialSpotsAvailability: SpecialSpotsAvailabilityResponse?
+    @Published private(set) var specialSpotsFetchedAt: Date?
+    @Published private(set) var specialSpotsFromCache = false
+    @Published private(set) var isLoadingSpecialSpots = false
+    @Published private(set) var specialSpotsErrorMessage: String?
+
     @Published var locationPermissionPrompt: LocationPermissionPrompt?
     @Published private(set) var errorMessage: String?
     @Published var arrivalAt = Date().addingTimeInterval(HomeViewModel.defaultArrivalOffset)
@@ -60,7 +68,11 @@ final class HomeViewModel: ObservableObject {
     }
 
     var destinationID: String? {
-        guard let selectedBuildingID, buildings.contains(where: { $0.id == selectedBuildingID }) else { return nil }
+        guard let selectedBuildingID,
+              buildings.contains(where: { $0.id == selectedBuildingID })
+        else {
+            return nil
+        }
         return selectedBuildingID
     }
 
@@ -68,14 +80,18 @@ final class HomeViewModel: ObservableObject {
         do {
             let loadedBuildings = try await service.buildings().value
             buildings = loadedBuildings
-            if let selectedBuildingID, loadedBuildings.contains(where: { $0.id == selectedBuildingID }) {
+
+            if let selectedBuildingID,
+               loadedBuildings.contains(where: { $0.id == selectedBuildingID }) {
                 return
             }
+
             guard let firstBuilding = loadedBuildings.first else {
                 selectedBuildingID = nil
                 defaults.removeObject(forKey: selectedBuildingKey)
                 return
             }
+
             selectBuilding(id: firstBuilding.id)
         } catch {
             errorMessage = error.localizedDescription
@@ -128,6 +144,7 @@ final class HomeViewModel: ObservableObject {
 
     static func roundedZone(for location: CLLocation?) -> String? {
         guard let coordinate = location?.coordinate else { return nil }
+
         return String(
             format: "%.2f,%.2f",
             locale: Locale(identifier: "en_US_POSIX"),
@@ -164,10 +181,15 @@ final class HomeViewModel: ObservableObject {
     func prefetchLevels() async {
         let service = service
         let destination = destinationID
+
         await withTaskGroup(of: Void.self) { group in
             for levelCode in ["P1", "P2", "P3"] {
                 group.addTask {
-                    _ = try? await service.spots(level: levelCode, destination: destination, filters: SpotFilters())
+                    _ = try? await service.spots(
+                        level: levelCode,
+                        destination: destination,
+                        filters: SpotFilters()
+                    )
                 }
             }
         }
@@ -175,6 +197,7 @@ final class HomeViewModel: ObservableObject {
 
     func loadRecommendation() async {
         let loaded: Fetched<LevelRecommendation>
+
         do {
             loaded = try await service.recommendedLevel(arrivalAt: arrivalAt)
         } catch {
@@ -186,6 +209,7 @@ final class HomeViewModel: ObservableObject {
             }
             loaded = local
         }
+
         recommendation = loaded.value
         recommendationFetchedAt = loaded.fetchedAt
         recommendationFromCache = loaded.fromCache
@@ -193,31 +217,61 @@ final class HomeViewModel: ObservableObject {
     }
 
     private func localRecommendation() async -> Fetched<LevelRecommendation>? {
-        guard let forecast = try? await service.predictions(level: nil, date: arrivalAt) else { return nil }
+        guard let forecast = try? await service.predictions(level: nil, date: arrivalAt) else {
+            return nil
+        }
+
         let slot = BogotaClock.slot(arrivalAt)
         let levels = forecast.value.levels.map { level in
-            LevelOccupancy(code: level.code, predictedOccupancy: level.points.first { $0.slot == slot }?.occupancy)
+            LevelOccupancy(
+                code: level.code,
+                predictedOccupancy: level.points.first { $0.slot == slot }?.occupancy
+            )
         }
+
         let recommended = levels
-            .compactMap { level in level.predictedOccupancy.map { (level.code, $0) } }
+            .compactMap { level in
+                level.predictedOccupancy.map { (level.code, $0) }
+            }
             .min { $0.1 < $1.1 }?
             .0
+
         guard recommended != nil else { return nil }
-        let recommendation = LevelRecommendation(arrivalAt: arrivalAt, slot: slot, recommended: recommended, levels: levels)
-        return Fetched(value: recommendation, fetchedAt: forecast.fetchedAt, fromCache: true)
+
+        let recommendation = LevelRecommendation(
+            arrivalAt: arrivalAt,
+            slot: slot,
+            recommended: recommended,
+            levels: levels
+        )
+
+        return Fetched(
+            value: recommendation,
+            fetchedAt: forecast.fetchedAt,
+            fromCache: true
+        )
     }
 
     private func trackForecastViewed(slot: String) {
         guard slot != lastViewedSlot else { return }
+
         let source = lastViewedSlot == nil ? "home_open" : "arrival_change"
         lastViewedSlot = slot
-        telemetry.trackForecastViewed(screen: "home", arrivalSlot: slot, source: source)
+        telemetry.trackForecastViewed(
+            screen: "home",
+            arrivalSlot: slot,
+            source: source
+        )
     }
 
     func loadForecast() async {
         isLoadingForecast = true
         defer { isLoadingForecast = false }
-        forecast = try? await service.predictions(level: nil, date: arrivalAt).value
+
+        forecast = try? await service.predictions(
+            level: nil,
+            date: arrivalAt
+        ).value
     }
 
     func loadNearbyLots() async {
@@ -229,6 +283,23 @@ final class HomeViewModel: ObservableObject {
             nearbyLots = try await service.nearbyLots().value
         } catch {
             nearbyLotsErrorMessage = error.localizedDescription
+        }
+    }
+
+    // MARK: - Accessible and EV spots
+
+    func loadSpecialSpotsAvailability() async {
+        isLoadingSpecialSpots = true
+        specialSpotsErrorMessage = nil
+        defer { isLoadingSpecialSpots = false }
+
+        do {
+            let result = try await service.specialSpotsAvailability()
+            specialSpotsAvailability = result.value
+            specialSpotsFetchedAt = result.fetchedAt
+            specialSpotsFromCache = result.fromCache
+        } catch {
+            specialSpotsErrorMessage = error.localizedDescription
         }
     }
 }
