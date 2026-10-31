@@ -1,93 +1,105 @@
 import SwiftUI
 
-struct FilterChip: View {
-    let title: String
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.system(size: 13, weight: isSelected ? .semibold : .medium))
-                .foregroundStyle(isSelected ? Palette.accent : Palette.ink)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 8)
-                .background(
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(isSelected ? Palette.accentSoft : Palette.card)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .stroke(isSelected ? Palette.accent : Palette.border, lineWidth: isSelected ? 1.6 : 1.5)
-                )
-        }
-        .buttonStyle(.plain)
-    }
-}
-
 struct SpotResultRow: View {
     let spot: SpotListing
+    var isRecommended = false
     let onReserve: () -> Void
 
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 16) {
             Text(spot.code)
-                .font(.system(size: 12, weight: .bold, design: .monospaced))
+                .font(AppFont.monoId)
                 .foregroundStyle(Palette.accent)
-                .frame(width: 46, height: 46)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .padding(.horizontal, 2)
+                .frame(width: 48, height: 48)
                 .background(
-                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    RoundedRectangle(cornerRadius: Radius.small, style: .continuous)
                         .fill(Palette.accentSoft)
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 7, style: .continuous)
-                        .stroke(Palette.accent.opacity(0.55), lineWidth: 1.2)
+                    RoundedRectangle(cornerRadius: Radius.small, style: .continuous)
+                        .stroke(Palette.accent.opacity(0.4), lineWidth: 1)
                 )
 
-            VStack(alignment: .leading, spacing: 10) {
-                Text(spot.levelTitle)
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(Palette.ink)
-
-                HStack(spacing: 10) {
-                    HStack(spacing: 3) {
-                        Image(systemName: "smallcircle.filled.circle")
-                            .font(.system(size: 10))
-                        Text("\(spot.walkMinutes) min")
-                    }
-                    Text("·")
-                        .foregroundStyle(Palette.slate)
-                    Text(spot.kind.title)
+            VStack(alignment: .leading, spacing: 4) {
+                if isRecommended {
+                    SectionLabel(text: "Recommended")
+                    Text("Level \(spot.levelCode) · \(spot.walkMinutes) min walk")
+                        .font(AppFont.heading2)
+                        .foregroundStyle(Palette.ink)
+                        .lineLimit(1)
+                    Text("Free, closest to your destination and matching your filters.")
+                        .font(AppFont.caption)
+                        .foregroundStyle(Palette.muted)
+                        .lineLimit(2)
+                } else {
+                    Text("Level \(spot.levelCode) · Zone \(spot.zone)")
+                        .font(AppFont.heading2)
+                        .foregroundStyle(Palette.ink)
+                        .lineLimit(1)
+                    meta
                 }
-                .font(.system(size: 12.5))
-                .foregroundStyle(Palette.subtle)
             }
 
             Spacer(minLength: 8)
 
             Button(action: onReserve) {
                 Text("Reserve")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(.white)
-                    .frame(width: 80, height: 34)
+                    .font(AppFont.button)
+                    .foregroundStyle(spot.isAvailable ? .white : Palette.ink.opacity(0.38))
+                    .padding(.horizontal, 16)
+                    .frame(minWidth: 80, minHeight: 36)
                     .background(
-                        RoundedRectangle(cornerRadius: 5, style: .continuous)
-                            .fill(Palette.accent)
+                        RoundedRectangle(cornerRadius: Radius.small, style: .continuous)
+                            .fill(spot.isAvailable ? Palette.accent : Palette.ink.opacity(0.12))
                     )
             }
             .buttonStyle(.plain)
             .disabled(!spot.isAvailable)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 15)
+        .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(Palette.card)
+            RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+                .fill(isRecommended ? Palette.accentSoft : Palette.card)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(Palette.line, lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+                .stroke(isRecommended ? Palette.accent.opacity(0.4) : Palette.line, lineWidth: 1)
         )
-        .shadow(color: Palette.ink.opacity(0.05), radius: 3, y: 1)
+    }
+
+    private var meta: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "clock")
+                .font(.system(size: 10))
+            Text("\(spot.walkMinutes) min  ·  \(kindLabel)\(spot.isAvailable ? "" : "  ·  taken")")
+                .lineLimit(1)
+            if let icon = kindIcon {
+                Image(systemName: icon.name)
+                    .font(.system(size: 10))
+                    .foregroundStyle(icon.color)
+            }
+        }
+        .font(AppFont.caption)
+        .foregroundStyle(Palette.muted)
+    }
+
+    private var kindLabel: String {
+        switch spot.kind {
+        case .standard: return "Standard"
+        case .vip: return "VIP"
+        case .electric: return "Electric"
+        case .accessible: return "Accessible"
+        }
+    }
+
+    private var kindIcon: (name: String, color: Color)? {
+        switch spot.kind {
+        case .electric: return ("bolt.fill", Palette.amberInk)
+        case .accessible: return ("figure.roll", Palette.accent)
+        default: return nil
+        }
     }
 }

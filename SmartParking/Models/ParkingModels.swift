@@ -28,6 +28,7 @@ enum LevelStatus {
 enum SpotState {
     case free
     case taken
+    case unavailable
     case reserved
     case you
 }
@@ -39,6 +40,9 @@ struct ParkingSpot: Identifiable, Equatable {
     let levelCode: String
     var state: SpotState
     let walkMinutes: Int
+    let isAccessible: Bool
+    let isEv: Bool
+    let isVip: Bool
 
     init(spot: Spot) {
         id = spot.id
@@ -47,6 +51,22 @@ struct ParkingSpot: Identifiable, Equatable {
         levelCode = spot.levelCode
         state = spot.state
         walkMinutes = spot.walkMinutes
+        isAccessible = spot.isAccessible
+        isEv = spot.isEv
+        isVip = spot.isVip
+    }
+
+    func matches(_ filter: FindSpotFilter) -> Bool {
+        switch filter {
+        case .available:
+            return state == .free
+        case .vip:
+            return state == .free && isVip
+        case .electric:
+            return state == .free && isEv
+        case .accessible:
+            return state == .free && isAccessible
+        }
     }
 }
 
@@ -66,12 +86,29 @@ struct ParkingZone: Identifiable, Equatable {
 
     static func zones(from spots: [Spot]) -> [ParkingZone] {
         let grouped = Dictionary(grouping: spots, by: \.zone)
+
         return grouped.keys.sorted().map { zone in
-            let cells = grouped[zone, default: []].map(ParkingSpot.init(spot:))
-            let rows = stride(from: 0, to: cells.count, by: spotsPerRow).enumerated().map { offset, start in
-                ParkingRow(index: offset + 1, spots: Array(cells[start..<min(start + spotsPerRow, cells.count)]))
+            let cells = grouped[zone, default: []]
+                .map(ParkingSpot.init(spot:))
+
+            let rows = stride(
+                from: 0,
+                to: cells.count,
+                by: spotsPerRow
+            ).enumerated().map { offset, start in
+                ParkingRow(
+                    index: offset + 1,
+                    spots: Array(
+                        cells[start..<min(start + spotsPerRow, cells.count)]
+                    )
+                )
             }
-            return ParkingZone(id: zone, name: "Zone \(zone)", rows: rows)
+
+            return ParkingZone(
+                id: zone,
+                name: "Zone \(zone)",
+                rows: rows
+            )
         }
     }
 }

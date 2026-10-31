@@ -76,12 +76,22 @@ struct SpotListing: Identifiable, Equatable, Sendable {
         levelCode = spot.levelCode
         zone = spot.zone
         walkMinutes = spot.walkMinutes
-        isAvailable = spot.state == .free
 
-        isVIP = false
-        isElectric = false
-        isAccessible = false
-        kind = .standard
+        isAvailable = spot.state == .free
+        isVIP = spot.isVip
+        isElectric = spot.isEv
+        isAccessible = spot.isAccessible
+
+        // Se conserva la misma prioridad de categoría que en Spot.
+        if spot.isVip {
+            kind = .vip
+        } else if spot.isEv {
+            kind = .electric
+        } else if spot.isAccessible {
+            kind = .accessible
+        } else {
+            kind = .standard
+        }
     }
 
     var levelTitle: String {

@@ -8,11 +8,25 @@ struct LoginView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 24) {
+                VStack(alignment: .leading, spacing: 0) {
                     AuthHeader(
-                        title: "Welcome back",
-                        subtitle: "Sign in to reserve a spot and find your car."
+                        title: "Log in",
+                        subtitle: "Use your account to find and reserve a spot."
                     )
+
+                    if viewModel.offlineMessage != nil {
+                        NoticeBox(
+                            message: "Logging in needs a connection. What you type stays here and the button turns on as soon as the phone is back online. You can keep browsing with 'Not now'.",
+                            title: "You're offline",
+                            icon: "icloud.slash"
+                        )
+                        .padding(.top, 24)
+                    }
+
+                    if let message = viewModel.errorMessage {
+                        AuthBanner(message: message, isError: true)
+                            .padding(.top, 16)
+                    }
 
                     VStack(spacing: 16) {
                         AuthField(
@@ -32,37 +46,28 @@ struct LoginView: View {
                             sanitize: { _, new in AuthValidation.cleanPassword(new) }
                         )
                     }
-
-                    if let message = viewModel.offlineMessage {
-                        AuthBanner(message: message, isError: true)
-                    }
-
-                    if let message = viewModel.errorMessage {
-                        AuthBanner(message: message, isError: true)
-                    }
+                    .padding(.top, 24)
 
                     PrimaryButton(
-                        title: "Sign in",
+                        title: viewModel.isConnected ? "Log in" : "Waiting for connection",
                         isLoading: viewModel.isLoading,
                         isEnabled: viewModel.canSignIn
                     ) {
                         Task { await viewModel.signIn() }
                     }
+                    .padding(.top, 24)
 
-                    HStack(spacing: 4) {
-                        Text("Don't have an account?")
-                            .foregroundStyle(Palette.muted)
-                        Button("Create one") {
-                            viewModel.clearMessages()
-                            showRegister = true
-                        }
-                        .fontWeight(.semibold)
-                        .foregroundStyle(Palette.accent)
+                    SecondaryButton(title: "Create an account", isEnabled: !viewModel.isLoading) {
+                        viewModel.clearMessages()
+                        showRegister = true
                     }
-                    .font(.system(size: 14))
+                    .padding(.top, 8)
                 }
-                .padding(24)
+                .frame(maxWidth: 480)
+                .padding(.horizontal, 16)
                 .padding(.top, 32)
+                .padding(.bottom, 24)
+                .frame(maxWidth: .infinity)
             }
             .scrollDismissesKeyboard(.interactively)
             .background(Palette.screen)

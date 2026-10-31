@@ -49,6 +49,18 @@ struct PredictionsResponse: Codable, Equatable {
     let levels: [LevelPrediction]
 }
 
+struct HourlyOccupancy: Equatable, Identifiable {
+    let hour: Int
+    let occupancy: Double?
+
+    var id: Int { hour }
+
+    var label: String {
+        let twelve = hour % 12
+        return twelve == 0 ? "12" : "\(twelve)"
+    }
+}
+
 struct LevelOccupancy: Codable, Equatable {
     let code: String
     let predictedOccupancy: Double?

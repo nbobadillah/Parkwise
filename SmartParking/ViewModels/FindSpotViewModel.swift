@@ -47,15 +47,27 @@ final class FindSpotViewModel: ObservableObject {
         spots.first
     }
 
-    init(service: ParkingServicing) {
+    init(
+        service: ParkingServicing,
+        initialFilter: FindSpotFilter? = nil
+    ) {
         self.service = service
 
         let savedFilter = UserDefaults.standard.string(
             forKey: Self.filterPreferenceKey
         )
 
-        filter = savedFilter.flatMap(FindSpotFilter.init(rawValue:))
+        let resolvedFilter = initialFilter
+            ?? savedFilter.flatMap(FindSpotFilter.init(rawValue:))
             ?? .available
+
+        filter = resolvedFilter
+
+        // Persistir también el filtro recibido inicialmente.
+        UserDefaults.standard.set(
+            resolvedFilter.rawValue,
+            forKey: Self.filterPreferenceKey
+        )
 
         memoryCache.countLimit = 16
 
@@ -82,28 +94,32 @@ final class FindSpotViewModel: ObservableObject {
         }
 
         let selectedFilter = filter
+
         let cacheKey = memoryCacheKey(
             levels: levels,
             destinationID: destinationID,
             filter: selectedFilter
         )
 
-        if let cached = memoryCache.object(forKey: cacheKey as NSString),
+        if let cached = memoryCache.object(
+            forKey: cacheKey as NSString
+        ),
            Date().timeIntervalSince(cached.savedAt) < Self.cacheTTL {
             spots = cached.spots
-            isShowingCachedData = true
+            isShowingCachedData = cached.fromResponseCache
             errorMessage = nil
             return
         }
 
         isLoading = true
         errorMessage = nil
+
         defer {
             isLoading = false
         }
 
         do {
-            // Todas las plazas se descargan sin filtros del backend.
+            // Descargar todas las plazas sin filtrar desde el backend.
             let fetchedResults = try await withThrowingTaskGroup(
                 of: Fetched<[Spot]>.self,
                 returning: [Fetched<[Spot]>].self
@@ -135,12 +151,14 @@ final class FindSpotViewModel: ObservableObject {
                 .flatMap(\.value)
                 .map(SpotListing.init(spot:))
 
-            // El filtrado y ordenamiento no bloquean el hilo principal.
+            // Filtrar y ordenar fuera del hilo principal.
             let processedSpots = await Task.detached(
                 priority: .userInitiated
             ) {
                 allListings
-                    .filter { $0.matches(selectedFilter) }
+                    .filter {
+                        $0.matches(selectedFilter)
+                    }
                     .sorted {
                         if $0.walkMinutes != $1.walkMinutes {
                             return $0.walkMinutes < $1.walkMinutes

@@ -3,6 +3,7 @@ import SwiftUI
 struct FindSpotView: View {
     let levels: [LevelSummary]
     let destinationID: String?
+    let initialFilter: FindSpotFilter
     let onReserve: (SpotListing) -> Void
 
     @ObservedObject private var networkMonitor: NetworkMonitor
@@ -13,10 +14,12 @@ struct FindSpotView: View {
         destinationID: String?,
         service: ParkingServicing,
         networkMonitor: NetworkMonitor,
+        initialFilter: FindSpotFilter = .available,
         onReserve: @escaping (SpotListing) -> Void
     ) {
         self.levels = levels
         self.destinationID = destinationID
+        self.initialFilter = initialFilter
         self.onReserve = onReserve
 
         _networkMonitor = ObservedObject(
@@ -24,21 +27,24 @@ struct FindSpotView: View {
         )
 
         _viewModel = StateObject(
-            wrappedValue: FindSpotViewModel(service: service)
+            wrappedValue: FindSpotViewModel(
+                service: service,
+                initialFilter: initialFilter
+            )
         )
     }
 
     private var filteredSpots: [SpotListing] {
-        let spots = viewModel.spots(
+        let results = viewModel.spots(
             matching: viewModel.debouncedQuery
         )
 
         guard viewModel.debouncedQuery.isEmpty,
               let recommendedSpot = viewModel.recommendedSpot else {
-            return spots
+            return results
         }
 
-        return spots.filter {
+        return results.filter {
             $0.id != recommendedSpot.id
         }
     }
@@ -54,33 +60,38 @@ struct FindSpotView: View {
             header
 
             ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
-                    Text(
-                        "\(viewModel.spots(matching: viewModel.debouncedQuery).count) spots found"
-                    )
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(Palette.subtle)
+                VStack(alignment: .leading, spacing: 16) {
+                    if !networkMonitor.isConnected {
+                        NoticeBox(
+                            message: "Filters and search work with the last saved copy. You can pick a spot now; the reservation is confirmed when the phone is back online.",
+                            title: "No signal",
+                            icon: "wifi.slash"
+                        )
+                    }
 
                     if viewModel.isShowingCachedData {
                         Label(
                             "Showing saved results",
                             systemImage: "arrow.clockwise"
                         )
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(Palette.subtle)
+                        .font(AppFont.caption)
+                        .foregroundStyle(Palette.muted)
                     }
 
-                    if let recommendedSpot {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Recommended spot")
-                                .font(.system(size: 15, weight: .bold))
-                                .foregroundStyle(Palette.ink)
-
-                            SpotResultRow(spot: recommendedSpot) {
-                                onReserve(recommendedSpot)
-                            }
+                    if let recommendedSpot, !viewModel.isLoading {
+                        SpotResultRow(
+                            spot: recommendedSpot,
+                            isRecommended: true
+                        ) {
+                            onReserve(recommendedSpot)
                         }
                     }
+
+                    Text(
+                        "\(viewModel.spots(matching: viewModel.debouncedQuery).count) spots found"
+                    )
+                    .font(AppFont.caption)
+                    .foregroundStyle(Palette.muted)
 
                     if viewModel.isLoading {
                         ProgressView()
@@ -92,7 +103,7 @@ struct FindSpotView: View {
                         emptyState
 
                     } else if !filteredSpots.isEmpty {
-                        VStack(spacing: 10) {
+                        VStack(spacing: 16) {
                             ForEach(filteredSpots) { spot in
                                 SpotResultRow(spot: spot) {
                                     onReserve(spot)
@@ -102,15 +113,15 @@ struct FindSpotView: View {
                     }
 
                     if let errorMessage = viewModel.errorMessage {
-                        AuthBanner(
+                        NoticeBox(
                             message: errorMessage,
-                            isError: true
+                            tone: .danger,
+                            icon: "exclamationmark.circle"
                         )
                     }
                 }
-                .padding(.horizontal, 18)
-                .padding(.top, 18)
-                .padding(.bottom, 26)
+                .padding(16)
+                .padding(.top, 8)
             }
         }
         .background(Palette.screen)
@@ -129,20 +140,16 @@ struct FindSpotView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Find a spot")
-                .font(.system(size: 20, weight: .bold))
-                .tracking(-0.3)
+            Text(title)
+                .font(AppFont.display)
                 .foregroundStyle(Palette.ink)
 
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(spacing: 8) {
-                    searchField
-                    micButton
-                }
+            VStack(alignment: .leading, spacing: 16) {
+                searchField
 
                 HStack(spacing: 8) {
                     ForEach(FindSpotFilter.allCases) { item in
-                        FilterChip(
+                        ChoiceChip(
                             title: item.rawValue,
                             isSelected: viewModel.filter == item
                         ) {
@@ -159,9 +166,9 @@ struct FindSpotView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 18)
-        .padding(.top, 6)
-        .padding(.bottom, 14)
+        .padding(.horizontal, 16)
+        .padding(.top, 24)
+        .padding(.bottom, 16)
         .background(Palette.card)
         .overlay(alignment: .bottom) {
             Rectangle()
@@ -170,8 +177,19 @@ struct FindSpotView: View {
         }
     }
 
+    private var title: String {
+        switch viewModel.filter {
+        case .accessible:
+            return "Accessible spots"
+        case .electric:
+            return "EV spots"
+        default:
+            return "Find a spot"
+        }
+    }
+
     private var searchField: some View {
-        HStack(spacing: 9) {
+        HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 14))
                 .foregroundStyle(Palette.muted)
@@ -182,53 +200,26 @@ struct FindSpotView: View {
                 prompt: Text("Spot code, zone, level…")
                     .foregroundColor(Palette.muted)
             )
-            .font(.system(size: 14))
+            .font(AppFont.body)
             .foregroundStyle(Palette.ink)
             .autocorrectionDisabled()
         }
-        .padding(.horizontal, 14)
-        .frame(height: 42)
+        .padding(.horizontal, 12)
+        .frame(height: 40)
         .background(
             RoundedRectangle(
-                cornerRadius: 8,
+                cornerRadius: Radius.card,
                 style: .continuous
             )
             .fill(Palette.neutral)
         )
         .overlay(
             RoundedRectangle(
-                cornerRadius: 8,
+                cornerRadius: Radius.card,
                 style: .continuous
             )
-            .stroke(Palette.border, lineWidth: 1.5)
+            .stroke(Palette.line, lineWidth: 1)
         )
-    }
-
-    private var micButton: some View {
-        Button {} label: {
-            Image(systemName: "mic")
-                .font(.system(size: 17))
-                .foregroundStyle(Palette.accent)
-                .frame(width: 42, height: 42)
-                .background(
-                    RoundedRectangle(
-                        cornerRadius: 8,
-                        style: .continuous
-                    )
-                    .fill(Palette.accentSoft)
-                )
-                .overlay(
-                    RoundedRectangle(
-                        cornerRadius: 8,
-                        style: .continuous
-                    )
-                    .stroke(
-                        Palette.accent.opacity(0.55),
-                        lineWidth: 1.5
-                    )
-                )
-        }
-        .buttonStyle(.plain)
     }
 
     private var emptyState: some View {

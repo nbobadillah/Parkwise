@@ -10,6 +10,7 @@ final class AuthViewModel: ObservableObject {
     @Published private(set) var isConnected = true
 
     @Published private(set) var nameError: String?
+    @Published private(set) var restoredDraft = false
 
     @Published var name = "" {
         didSet { saveDraft(name, forKey: Self.draftNameKey) }
@@ -133,14 +134,18 @@ final class AuthViewModel: ObservableObject {
         clearDraft()
         clearMessages()
         nameRevertedTo = nil
+        restoredDraft = false
     }
 
     func restoreDraft() {
+        let savedName = defaults.string(forKey: Self.draftNameKey) ?? ""
+        let savedEmail = defaults.string(forKey: Self.draftEmailKey) ?? ""
+        restoredDraft = (name.isEmpty && !savedName.isEmpty) || (email.isEmpty && !savedEmail.isEmpty)
         if name.isEmpty {
-            name = defaults.string(forKey: Self.draftNameKey) ?? ""
+            name = savedName
         }
         if email.isEmpty {
-            email = defaults.string(forKey: Self.draftEmailKey) ?? ""
+            email = savedEmail
         }
     }
 
