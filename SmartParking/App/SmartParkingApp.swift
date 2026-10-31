@@ -3,6 +3,7 @@ import SwiftUI
 @main
 struct SmartParkingApp: App {
     @StateObject private var authViewModel: AuthViewModel
+
     private let parkingService: ParkingServicing
     private let reservationService: ReservationServicing
     private let locationService: LocationService
@@ -16,23 +17,33 @@ struct SmartParkingApp: App {
         let parkedCarStore = ParkedCarStore.shared
         let networkMonitor = NetworkMonitor.shared
 
-        TelemetryService.shared.token = { authService.token }
-
-        parkingService = BackendParkingService(token: { authService.token })
-        reservationService = BackendReservationService(token: { authService.token })
-
-        self.locationService = locationService
-        self.parkedCarStore = parkedCarStore
-        self.networkMonitor = networkMonitor
-
-        _authViewModel = StateObject(
-            wrappedValue: AuthViewModel(service: authService, networkMonitor: networkMonitor)
+        let parkingService = BackendParkingService(
+            token: { authService.token }
+        )
+        let reservationService = BackendReservationService(
+            token: { authService.token }
         )
 
-        actionQueue = ActionQueue(
+        let actionQueue = ActionQueue(
             store: ActionQueueStore(),
             service: reservationService,
             networkMonitor: networkMonitor
+        )
+
+        TelemetryService.shared.token = { authService.token }
+
+        self.parkingService = parkingService
+        self.reservationService = reservationService
+        self.locationService = locationService
+        self.parkedCarStore = parkedCarStore
+        self.networkMonitor = networkMonitor
+        self.actionQueue = actionQueue
+
+        _authViewModel = StateObject(
+            wrappedValue: AuthViewModel(
+                service: authService,
+                networkMonitor: networkMonitor
+            )
         )
     }
 
@@ -49,7 +60,8 @@ struct SmartParkingApp: App {
                         reservationService: reservationService,
                         locationService: locationService,
                         parkedCarStore: parkedCarStore,
-                        networkMonitor: networkMonitor
+                        networkMonitor: networkMonitor,
+                        actionQueue: actionQueue
                     )
                 }
             }

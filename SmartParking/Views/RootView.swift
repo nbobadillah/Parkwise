@@ -17,11 +17,14 @@ struct RootView: View {
     @ObservedObject private var networkMonitor: NetworkMonitor
     @ObservedObject private var campusAlerts = CampusAlertService.shared
     @ObservedObject private var serverStatus = ServerStatus.shared
+
     let parkingService: ParkingServicing
     let reservationService: ReservationServicing
+    let actionQueue: ActionQueueing
 
     @StateObject private var homeViewModel: HomeViewModel
     @StateObject private var reservationViewModel: ReservationViewModel
+
     @State private var tab: AppTab = .home
     @State private var levelCode = "P1"
     @State private var homeRoute: HomeRoute = .dashboard
@@ -34,15 +37,23 @@ struct RootView: View {
         reservationService: ReservationServicing,
         locationService: LocationService,
         parkedCarStore: ParkedCarStore,
-        networkMonitor: NetworkMonitor
+        networkMonitor: NetworkMonitor,
+        actionQueue: ActionQueueing
     ) {
         self.parkingService = parkingService
         self.reservationService = reservationService
+        self.actionQueue = actionQueue
+
         _locationService = ObservedObject(wrappedValue: locationService)
         _networkMonitor = ObservedObject(wrappedValue: networkMonitor)
+
         _homeViewModel = StateObject(
-            wrappedValue: HomeViewModel(service: parkingService, locationService: locationService)
+            wrappedValue: HomeViewModel(
+                service: parkingService,
+                locationService: locationService
+            )
         )
+
         _reservationViewModel = StateObject(
             wrappedValue: ReservationViewModel(
                 service: reservationService,
@@ -58,6 +69,7 @@ struct RootView: View {
                 HStack(spacing: 8) {
                     ProgressView()
                         .tint(Palette.accent)
+
                     Text("Waking up the server. This can take up to a minute.")
                         .font(AppFont.body)
                         .foregroundStyle(Palette.accent)
@@ -85,7 +97,10 @@ struct RootView: View {
             if tab == .home {
                 homeViewModel.prepareLocationPermission()
             }
-            await homeViewModel.loadLevels(isAuthenticated: authViewModel.isAuthenticated)
+
+            await homeViewModel.loadLevels(
+                isAuthenticated: authViewModel.isAuthenticated
+            )
         }
         .onChange(of: homeViewModel.campusFull) { _, full in
             campusAlerts.campusDidChange(full: full)
@@ -102,6 +117,7 @@ struct RootView: View {
         .onChange(of: locationService.authorization) { _, _ in
             if tab == .home {
                 homeViewModel.locationAuthorizationDidChange()
+
                 Task {
                     await homeViewModel.loadLevels(
                         isAuthenticated: authViewModel.isAuthenticated
@@ -120,7 +136,9 @@ struct RootView: View {
         }
         .onChange(of: authViewModel.isAuthenticated) { _, isAuthenticated in
             Task {
-                await homeViewModel.loadLevels(isAuthenticated: isAuthenticated)
+                await homeViewModel.loadLevels(
+                    isAuthenticated: isAuthenticated
+                )
             }
         }
         .task(id: authViewModel.isAuthenticated) {
@@ -128,6 +146,7 @@ struct RootView: View {
                 reservationViewModel.reset()
                 return
             }
+
             showSignIn = false
             await reservationViewModel.loadActive()
             await reservationViewModel.loadHistory()
@@ -141,7 +160,7 @@ struct RootView: View {
             case .explanation:
                 Alert(
                     title: Text("Use your location?"),
-                    message: Text("Location is optional. Parkwise uses it to record approximate demand when campus is full and to save your car's position aftercheck-in."),
+                    message: Text("Location is optional. Parkwise uses it to record approximate demand when campus is full and to save your car's position after check-in."),
                     primaryButton: .default(
                         Text("Continue"),
                         action: homeViewModel.requestLocationPermission
@@ -151,6 +170,7 @@ struct RootView: View {
                         action: homeViewModel.dismissLocationPermissionPrompt
                     )
                 )
+
             case .settings:
                 Alert(
                     title: Text("Location access is off"),
@@ -168,7 +188,7 @@ struct RootView: View {
         }
     }
 
-    // Al tocar cualquier pestaña se vuelve a la pantalla principal de cada sección
+    // Al tocar cualquier pestaña se vuelve a la pantalla principal de cada sección.
     private var tabSelection: Binding<AppTab> {
         Binding(
             get: { tab },
@@ -181,7 +201,12 @@ struct RootView: View {
     }
 
     private func openSettings() {
-        guard let settingsURL = URL(string: UIApplication.openSettingsURLString) else { return }
+        guard let settingsURL = URL(
+            string: UIApplication.openSettingsURLString
+        ) else {
+            return
+        }
+
         UIApplication.shared.open(settingsURL)
     }
 
@@ -190,7 +215,10 @@ struct RootView: View {
         switch tab {
         case .home:
             if homeViewModel.campusFull {
-                CampusFullView(viewModel: homeViewModel, alerts: campusAlerts)
+                CampusFullView(
+                    viewModel: homeViewModel,
+                    alerts: campusAlerts
+                )
             } else {
                 switch homeRoute {
                 case .dashboard:
@@ -201,12 +229,15 @@ struct RootView: View {
                             mapRoute = .floor
                             tab = .map
                         },
-                        onFindSpot: { filter in homeRoute = .findSpot(filter) },
+                        onFindSpot: { filter in
+                            homeRoute = .findSpot(filter)
+                        },
                         onFindCar: {
                             mapRoute = .findCar
                             tab = .map
                         }
                     )
+
                 case .findSpot(let filter):
                     FindSpotView(
                         levels: homeViewModel.levels,
@@ -221,6 +252,7 @@ struct RootView: View {
                     .id(filter)
                 }
             }
+
         case .map:
             switch mapRoute {
             case .floor:
@@ -235,6 +267,7 @@ struct RootView: View {
                         tab = .reserve
                     }
                 )
+
             case .findCar:
                 if authViewModel.isAuthenticated {
                     FindCarView(
@@ -243,21 +276,27 @@ struct RootView: View {
                         locationService: locationService,
                         destinationID: homeViewModel.destinationID,
                         networkMonitor: networkMonitor,
-                        onOpenReserve: { tab = .reserve }
+                        onOpenReserve: {
+                            tab = .reserve
+                        }
                     )
                 } else {
                     SignInPromptView(
                         title: "Find your car",
                         message: "Sign in to see where you parked after checking in.",
                         icon: "car.fill"
-                    ) { showSignIn = true }
+                    ) {
+                        showSignIn = true
+                    }
                 }
             }
+
         case .reserve:
             if authViewModel.isAuthenticated {
                 ReserveSpotView(
                     selectedSpot: selectedSpot,
                     viewModel: reservationViewModel,
+                    actionQueue: actionQueue,
                     onOpenMap: {
                         mapRoute = .floor
                         tab = .map
@@ -273,22 +312,30 @@ struct RootView: View {
                 )
             } else {
                 SignInPromptView(
-                    title: selectedSpot.map { "Reserve \($0.code)" } ?? "Reserve a spot",
+                    title: selectedSpot.map {
+                        "Reserve \($0.code)"
+                    } ?? "Reserve a spot",
                     message: "Create an account or sign in to hold a spot for 15 minutes.",
                     icon: "calendar.badge.plus"
-                ) { showSignIn = true }
+                ) {
+                    showSignIn = true
+                }
             }
+
         case .profile:
             if authViewModel.isAuthenticated {
                 ProfileView(
-                    reservationViewModel: reservationViewModel
+                    reservationViewModel: reservationViewModel,
+                    actionQueue: actionQueue
                 )
             } else {
                 SignInPromptView(
                     title: "Your profile",
                     message: "Create an account or sign in to see your reservations.",
                     icon: "person.crop.circle"
-                ) { showSignIn = true }
+                ) {
+                    showSignIn = true
+                }
             }
         }
     }
@@ -306,10 +353,12 @@ struct PlaceholderView: View {
                 .foregroundStyle(Palette.accent)
                 .frame(width: 56, height: 56)
                 .background(Circle().fill(Palette.accentSoft))
+
             Text(title)
                 .font(AppFont.display)
                 .foregroundStyle(Palette.ink)
                 .padding(.top, 8)
+
             Text(message)
                 .font(AppFont.caption)
                 .foregroundStyle(Palette.muted)
@@ -334,18 +383,26 @@ struct SignInPromptView: View {
                 .foregroundStyle(Palette.accent)
                 .frame(width: 56, height: 56)
                 .background(Circle().fill(Palette.accentSoft))
+
             Text(title)
                 .font(AppFont.display)
                 .foregroundStyle(Palette.ink)
                 .padding(.top, 8)
+
             Text(message)
                 .font(AppFont.caption)
                 .foregroundStyle(Palette.muted)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 280)
-            PrimaryButton(title: "Log in or create account", isLoading: false, isEnabled: true, action: onSignIn)
-                .frame(maxWidth: 320)
-                .padding(.top, 16)
+
+            PrimaryButton(
+                title: "Log in or create account",
+                isLoading: false,
+                isEnabled: true,
+                action: onSignIn
+            )
+            .frame(maxWidth: 320)
+            .padding(.top, 16)
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
