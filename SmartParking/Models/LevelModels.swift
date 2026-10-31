@@ -76,3 +76,25 @@ struct LevelRecommendation: Codable, Equatable {
         levels.first { $0.code == recommended }?.predictedOccupancy
     }
 }
+
+struct SpecialSpotCounts: Codable, Equatable {
+    let total: Int
+    let free: Int
+    let reserved: Int
+    let occupied: Int
+    let disabled: Int
+}
+
+struct SpecialSpotLevelAvailability: Codable, Identifiable, Equatable {
+    let levelCode: String
+    let levelName: String
+    let accessible: SpecialSpotCounts
+    let ev: SpecialSpotCounts
+
+    var id: String { levelCode }
+}
+
+struct SpecialSpotsAvailabilityResponse: Codable, Equatable {
+    let generatedAt: Date
+    let levels: [SpecialSpotLevelAvailability]
+}

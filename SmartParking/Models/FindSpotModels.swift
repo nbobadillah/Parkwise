@@ -1,6 +1,6 @@
 import Foundation
 
-enum SpotKind: Equatable {
+enum SpotKind: Equatable, Sendable {
     case standard
     case vip
     case electric
@@ -13,14 +13,14 @@ enum SpotKind: Equatable {
         case .vip:
             return "VIP"
         case .electric:
-            return "Electric \u{26A1}\u{FE0F}"
+            return "Electric ⚡️"
         case .accessible:
-            return "Accessible \u{267F}\u{FE0F}"
+            return "Accessible ♿️"
         }
     }
 }
 
-enum FindSpotFilter: String, CaseIterable, Identifiable {
+enum FindSpotFilter: String, CaseIterable, Identifiable, Sendable {
     case available = "Available"
     case vip = "VIP"
     case electric = "Electric"
@@ -31,14 +31,18 @@ enum FindSpotFilter: String, CaseIterable, Identifiable {
     }
 }
 
-struct SpotListing: Identifiable, Equatable {
+struct SpotListing: Identifiable, Equatable, Sendable {
     let id: String
     let code: String
     let levelCode: String
     let zone: String
     let walkMinutes: Int
     let kind: SpotKind
+
     let isAvailable: Bool
+    let isVIP: Bool
+    let isElectric: Bool
+    let isAccessible: Bool
 
     init(spot: Spot) {
         id = spot.id
@@ -46,8 +50,15 @@ struct SpotListing: Identifiable, Equatable {
         levelCode = spot.levelCode
         zone = spot.zone
         walkMinutes = spot.walkMinutes
-        isAvailable = spot.status == .free
 
+        // Las plazas propias no se ofrecen como disponibles.
+        isAvailable = spot.status == .free && !spot.mine
+
+        isVIP = spot.isVip
+        isElectric = spot.isEv
+        isAccessible = spot.isAccessible
+
+        // Se conserva una categoría principal para la presentación.
         if spot.isVip {
             kind = .vip
         } else if spot.isEv {
@@ -65,11 +76,38 @@ struct SpotListing: Identifiable, Equatable {
         levelCode = spot.levelCode
         zone = spot.zone
         walkMinutes = spot.walkMinutes
+
         isAvailable = spot.state == .free
-        kind = .standard
+        isVIP = spot.isVip
+        isElectric = spot.isEv
+        isAccessible = spot.isAccessible
+
+        // Se conserva la misma prioridad de categoría que en Spot.
+        if spot.isVip {
+            kind = .vip
+        } else if spot.isEv {
+            kind = .electric
+        } else if spot.isAccessible {
+            kind = .accessible
+        } else {
+            kind = .standard
+        }
     }
 
     var levelTitle: String {
         "\(levelCode) · Zone \(zone)"
+    }
+
+    func matches(_ filter: FindSpotFilter) -> Bool {
+        switch filter {
+        case .available:
+            return isAvailable
+        case .vip:
+            return isAvailable && isVIP
+        case .electric:
+            return isAvailable && isElectric
+        case .accessible:
+            return isAvailable && isAccessible
+        }
     }
 }

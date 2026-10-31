@@ -8,7 +8,6 @@ struct FindSpotView: View {
 
     @ObservedObject private var networkMonitor: NetworkMonitor
     @StateObject private var viewModel: FindSpotViewModel
-    @State private var query = ""
 
     init(
         levels: [LevelSummary],
@@ -22,22 +21,38 @@ struct FindSpotView: View {
         self.destinationID = destinationID
         self.initialFilter = initialFilter
         self.onReserve = onReserve
-        _networkMonitor = ObservedObject(wrappedValue: networkMonitor)
-        _viewModel = StateObject(wrappedValue: FindSpotViewModel(service: service, filter: initialFilter))
+
+        _networkMonitor = ObservedObject(
+            wrappedValue: networkMonitor
+        )
+
+        _viewModel = StateObject(
+            wrappedValue: FindSpotViewModel(
+                service: service,
+                initialFilter: initialFilter
+            )
+        )
     }
 
     private var filteredSpots: [SpotListing] {
-        let spots = viewModel.spots(matching: query)
+        let results = viewModel.spots(
+            matching: viewModel.debouncedQuery
+        )
 
-        guard query.isEmpty, let recommendedSpot = viewModel.recommendedSpot else {
-            return spots
+        guard viewModel.debouncedQuery.isEmpty,
+              let recommendedSpot = viewModel.recommendedSpot else {
+            return results
         }
 
-        return spots.filter { $0.id != recommendedSpot.id }
+        return results.filter {
+            $0.id != recommendedSpot.id
+        }
     }
 
     private var recommendedSpot: SpotListing? {
-        query.isEmpty ? viewModel.recommendedSpot : nil
+        viewModel.debouncedQuery.isEmpty
+            ? viewModel.recommendedSpot
+            : nil
     }
 
     var body: some View {
@@ -54,21 +69,39 @@ struct FindSpotView: View {
                         )
                     }
 
+                    if viewModel.isShowingCachedData {
+                        Label(
+                            "Showing saved results",
+                            systemImage: "arrow.clockwise"
+                        )
+                        .font(AppFont.caption)
+                        .foregroundStyle(Palette.muted)
+                    }
+
                     if let recommendedSpot, !viewModel.isLoading {
-                        SpotResultRow(spot: recommendedSpot, isRecommended: true) {
+                        SpotResultRow(
+                            spot: recommendedSpot,
+                            isRecommended: true
+                        ) {
                             onReserve(recommendedSpot)
                         }
                     }
 
-                    Text("\(viewModel.spots(matching: query).count) spots found")
-                        .font(AppFont.caption)
-                        .foregroundStyle(Palette.muted)
+                    Text(
+                        "\(viewModel.spots(matching: viewModel.debouncedQuery).count) spots found"
+                    )
+                    .font(AppFont.caption)
+                    .foregroundStyle(Palette.muted)
 
                     if viewModel.isLoading {
                         ProgressView()
                             .frame(maxWidth: .infinity)
-                    } else if viewModel.spots(matching: query).isEmpty {
+
+                    } else if viewModel.spots(
+                        matching: viewModel.debouncedQuery
+                    ).isEmpty {
                         emptyState
+
                     } else if !filteredSpots.isEmpty {
                         VStack(spacing: 16) {
                             ForEach(filteredSpots) { spot in
@@ -80,7 +113,11 @@ struct FindSpotView: View {
                     }
 
                     if let errorMessage = viewModel.errorMessage {
-                        NoticeBox(message: errorMessage, tone: .danger, icon: "exclamationmark.circle")
+                        NoticeBox(
+                            message: errorMessage,
+                            tone: .danger,
+                            icon: "exclamationmark.circle"
+                        )
                     }
                 }
                 .padding(16)
@@ -117,7 +154,10 @@ struct FindSpotView: View {
                             isSelected: viewModel.filter == item
                         ) {
                             viewModel.filter = item
-                            TelemetryService.shared.trackFilterApplied(filter: item)
+
+                            TelemetryService.shared.trackFilterApplied(
+                                filter: item
+                            )
                         }
                     }
 
@@ -138,10 +178,13 @@ struct FindSpotView: View {
     }
 
     private var title: String {
-        switch initialFilter {
-        case .accessible: return "Accessible spots"
-        case .electric: return "EV spots"
-        default: return "Find a spot"
+        switch viewModel.filter {
+        case .accessible:
+            return "Accessible spots"
+        case .electric:
+            return "EV spots"
+        default:
+            return "Find a spot"
         }
     }
 
@@ -153,7 +196,7 @@ struct FindSpotView: View {
 
             TextField(
                 "Search",
-                text: $query,
+                text: $viewModel.searchQuery,
                 prompt: Text("Spot code, zone, level…")
                     .foregroundColor(Palette.muted)
             )
@@ -164,12 +207,18 @@ struct FindSpotView: View {
         .padding(.horizontal, 12)
         .frame(height: 40)
         .background(
-            RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
-                .fill(Palette.neutral)
+            RoundedRectangle(
+                cornerRadius: Radius.card,
+                style: .continuous
+            )
+            .fill(Palette.neutral)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
-                .stroke(Palette.line, lineWidth: 1)
+            RoundedRectangle(
+                cornerRadius: Radius.card,
+                style: .continuous
+            )
+            .stroke(Palette.line, lineWidth: 1)
         )
     }
 
@@ -184,7 +233,7 @@ struct FindSpotView: View {
                 .foregroundStyle(Palette.ink)
 
             Text(
-                query.isEmpty
+                viewModel.debouncedQuery.isEmpty
                     ? "There are no spots matching this filter"
                     : "Try another search"
             )
