@@ -109,6 +109,8 @@ struct ReserveSpotView: View {
             }
         }
         .background(Palette.screen)
+        .onAppear { viewModel.reserveScreenOpened() }
+        .onDisappear { viewModel.reserveScreenClosed() }
         .task {
             await loadPendingActions()
         }

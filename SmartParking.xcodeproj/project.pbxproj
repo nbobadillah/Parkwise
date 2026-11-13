@@ -46,6 +46,7 @@
 		C837EDD89E0EA23CA8CB3721 /* SpotCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = B13CBF3E6156A1E37ECCA80F /* SpotCell.swift */; };
 		C8B786C1FFE2B0CB13F0B1D8 /* ReservationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FB94EF408FBBB4EF9BE2F3A /* ReservationService.swift */; };
 		CB38162EA3B04AEDE10E2F87 /* LevelModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1189DAA764AE4FB841E817E /* LevelModels.swift */; };
+		CF1C43534D6FB929262318CB /* CrashMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0007BE44DD768E0C0A442CC8 /* CrashMonitor.swift */; };
 		D062A1173556C04B543D6646 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D3C7634F855EC296CD1F80 /* LoginView.swift */; };
 		D1B76E82717655BCCDFB0BAC /* FindSpotComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34D2DFAB7381760043AA924F /* FindSpotComponents.swift */; };
 		D8005B1676FC7B8DA1586831 /* AppUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBA60E9FD350426E26506664 /* AppUser.swift */; };
@@ -60,6 +61,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0007BE44DD768E0C0A442CC8 /* CrashMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashMonitor.swift; sourceTree = "<group>"; };
 		0045FE43CF72965E42503372 /* ReservationModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationModels.swift; sourceTree = "<group>"; };
 		028EBFD34E1CCAEE4FF4554C /* ReservationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationViewModel.swift; sourceTree = "<group>"; };
 		1A73A5B6567D1A2F0038190C /* AuthComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthComponents.swift; sourceTree = "<group>"; };
@@ -160,6 +162,7 @@
 				CE10FBB9AA075CE9397D9BDD /* APIClient.swift */,
 				919709B4035C0C70D24CADD6 /* AuthService.swift */,
 				6B1875368A80F6268E91B431 /* CampusAlertService.swift */,
+				0007BE44DD768E0C0A442CC8 /* CrashMonitor.swift */,
 				5931C53022DF94FA3110F8F5 /* LocationService.swift */,
 				DADF73D1434D94B2971869B9 /* NetworkMonitor.swift */,
 				A24D379211F813958AEFFAA7 /* ParkedCarStore.swift */,
@@ -323,6 +326,7 @@
 				A6A8D7F3E23EC520973A206A /* AuthViewModel.swift in Sources */,
 				A32943DD9650C0ACC40FC4F3 /* CampusAlertService.swift in Sources */,
 				784D1D84AB77BD4CAF898A77 /* CampusFullView.swift in Sources */,
+				CF1C43534D6FB929262318CB /* CrashMonitor.swift in Sources */,
 				A84B621964648F955BA4E5DC /* FindCarComponents.swift in Sources */,
 				B655AE035CB4C865BC784FA2 /* FindCarView.swift in Sources */,
 				D1B76E82717655BCCDFB0BAC /* FindSpotComponents.swift in Sources */,
