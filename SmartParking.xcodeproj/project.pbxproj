@@ -29,6 +29,7 @@
 		6CCA18F06FAD24487502ED6F /* ActionQueueStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CC2176DC0ADB0AB41CCD493 /* ActionQueueStore.swift */; };
 		6D589FF2317AA1CA0776FCD5 /* ParkedCarStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A24D379211F813958AEFFAA7 /* ParkedCarStore.swift */; };
 		6F4A65CE42B3184F339A7B2B /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3685140C57C0209BD802F06 /* RootView.swift */; };
+		735AFDD16F48310227AD775F /* LotPhoto.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB7DC2249F184080EAAF00A4 /* LotPhoto.swift */; };
 		7657682BB63212ED1A3C8B22 /* TelemetryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0B3346456851875087EEE0A /* TelemetryService.swift */; };
 		784D1D84AB77BD4CAF898A77 /* CampusFullView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 444CD6116C0729F6DD7DCEAC /* CampusFullView.swift */; };
 		7DFE5C6C1F82A4348CD34D36 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F16026EB0059B8961CF187A4 /* HomeView.swift */; };
@@ -36,11 +37,13 @@
 		8D8F90A896A194AC19674818 /* AppTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDAB4AE8ABAED6F071013CA4 /* AppTabBar.swift */; };
 		91636DAFEF03B3FF70266C43 /* ParkingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD48138B295B21646737C805 /* ParkingService.swift */; };
 		A32943DD9650C0ACC40FC4F3 /* CampusAlertService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B1875368A80F6268E91B431 /* CampusAlertService.swift */; };
+		A3B559B112BD69C8ACDA21A5 /* LotPhotoViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EAE97E47504FC45A498F55C /* LotPhotoViewModel.swift */; };
 		A6A8D7F3E23EC520973A206A /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CCD26713F736832E9B8788A /* AuthViewModel.swift */; };
 		A84B621964648F955BA4E5DC /* FindCarComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95330879F0704F372978A43E /* FindCarComponents.swift */; };
 		B655AE035CB4C865BC784FA2 /* FindCarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3618048DCA5510CC39BDFB12 /* FindCarView.swift */; };
 		B78C783ECFD2DC6B6475D57E /* ParkingMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8EA5DE185C190EBBB9B7543 /* ParkingMapView.swift */; };
 		B82732E4A69E43EF7FEC533F /* SpotModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33A204A90F32019041329614 /* SpotModels.swift */; };
+		B95FDE2CCFB3777C94149064 /* LotImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BE9ED5ACBE583CF9CD272F9 /* LotImageCache.swift */; };
 		C35DC349829F7893E2DD4EE6 /* RecommendationCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = F140173A54963A435336B326 /* RecommendationCard.swift */; };
 		C6EE0CE0BC4592FAD91C61DF /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5931C53022DF94FA3110F8F5 /* LocationService.swift */; };
 		C837EDD89E0EA23CA8CB3721 /* SpotCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = B13CBF3E6156A1E37ECCA80F /* SpotCell.swift */; };
@@ -73,6 +76,7 @@
 		3618048DCA5510CC39BDFB12 /* FindCarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindCarView.swift; sourceTree = "<group>"; };
 		3CC2176DC0ADB0AB41CCD493 /* ActionQueueStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionQueueStore.swift; sourceTree = "<group>"; };
 		444CD6116C0729F6DD7DCEAC /* CampusFullView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CampusFullView.swift; sourceTree = "<group>"; };
+		4EAE97E47504FC45A498F55C /* LotPhotoViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LotPhotoViewModel.swift; sourceTree = "<group>"; };
 		4FB94EF408FBBB4EF9BE2F3A /* ReservationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationService.swift; sourceTree = "<group>"; };
 		5931C53022DF94FA3110F8F5 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
 		611A4A43675686E0660C91E8 /* SmartParking.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = SmartParking.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -80,6 +84,7 @@
 		6B1875368A80F6268E91B431 /* CampusAlertService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CampusAlertService.swift; sourceTree = "<group>"; };
 		7496320DD17E3BD3BA7A83B2 /* RegisterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterView.swift; sourceTree = "<group>"; };
 		7842261127B8C973F3014152 /* ReserveSpotView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReserveSpotView.swift; sourceTree = "<group>"; };
+		7BE9ED5ACBE583CF9CD272F9 /* LotImageCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LotImageCache.swift; sourceTree = "<group>"; };
 		81DBF1002C43641B39D2CEFC /* AccessibleEVSpotsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibleEVSpotsView.swift; sourceTree = "<group>"; };
 		87D3C7634F855EC296CD1F80 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		88535BA91C5335FBEAFBE178 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
@@ -113,6 +118,7 @@
 		F140173A54963A435336B326 /* RecommendationCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationCard.swift; sourceTree = "<group>"; };
 		F16026EB0059B8961CF187A4 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		F70BB685EEB3B6DA34468D8E /* ForecastCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForecastCard.swift; sourceTree = "<group>"; };
+		FB7DC2249F184080EAAF00A4 /* LotPhoto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LotPhoto.swift; sourceTree = "<group>"; };
 		FD039C910EF5813DF6392EF5 /* ActionQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionQueue.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -123,6 +129,7 @@
 				2CCD26713F736832E9B8788A /* AuthViewModel.swift */,
 				C8069442E6B23B43B0A1E421 /* FindSpotViewModel.swift */,
 				A2FEE8F9F2F4BDC28C2BB803 /* HomeViewModel.swift */,
+				4EAE97E47504FC45A498F55C /* LotPhotoViewModel.swift */,
 				630260762228BB1C0EDFBCD5 /* ParkingMapViewModel.swift */,
 				028EBFD34E1CCAEE4FF4554C /* ReservationViewModel.swift */,
 			);
@@ -164,6 +171,7 @@
 				6B1875368A80F6268E91B431 /* CampusAlertService.swift */,
 				0007BE44DD768E0C0A442CC8 /* CrashMonitor.swift */,
 				5931C53022DF94FA3110F8F5 /* LocationService.swift */,
+				7BE9ED5ACBE583CF9CD272F9 /* LotImageCache.swift */,
 				DADF73D1434D94B2971869B9 /* NetworkMonitor.swift */,
 				A24D379211F813958AEFFAA7 /* ParkedCarStore.swift */,
 				AD48138B295B21646737C805 /* ParkingService.swift */,
@@ -210,6 +218,7 @@
 				34D2DFAB7381760043AA924F /* FindSpotComponents.swift */,
 				F70BB685EEB3B6DA34468D8E /* ForecastCard.swift */,
 				92F8616FCC45CD2E2248B1E8 /* LevelCard.swift */,
+				FB7DC2249F184080EAAF00A4 /* LotPhoto.swift */,
 				31C5B08A176B969F4F141F23 /* Pills.swift */,
 				F140173A54963A435336B326 /* RecommendationCard.swift */,
 				B13CBF3E6156A1E37ECCA80F /* SpotCell.swift */,
@@ -340,6 +349,9 @@
 				CB38162EA3B04AEDE10E2F87 /* LevelModels.swift in Sources */,
 				C6EE0CE0BC4592FAD91C61DF /* LocationService.swift in Sources */,
 				D062A1173556C04B543D6646 /* LoginView.swift in Sources */,
+				B95FDE2CCFB3777C94149064 /* LotImageCache.swift in Sources */,
+				735AFDD16F48310227AD775F /* LotPhoto.swift in Sources */,
+				A3B559B112BD69C8ACDA21A5 /* LotPhotoViewModel.swift in Sources */,
 				14D916DE87B650EF55E10818 /* NetworkMonitor.swift in Sources */,
 				543AE446B4617058C88C1939 /* Palette.swift in Sources */,
 				6D589FF2317AA1CA0776FCD5 /* ParkedCarStore.swift in Sources */,

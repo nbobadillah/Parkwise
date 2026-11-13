@@ -185,6 +185,8 @@ private struct NearbyParkingCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
+            LotPhoto(url: lot.photoURL)
+
             HStack(alignment: .top, spacing: 16) {
                 VStack(alignment: .leading, spacing: 8) {
                     if isPrimary {
