@@ -4,6 +4,7 @@ struct CampusFullView: View {
     @EnvironmentObject private var authViewModel: AuthViewModel
     @ObservedObject var viewModel: HomeViewModel
     @ObservedObject var alerts: CampusAlertService
+    @ObservedObject private var networkMonitor = NetworkMonitor.shared
 
     var body: some View {
         VStack(spacing: 0) {
@@ -28,7 +29,7 @@ struct CampusFullView: View {
             }
         }
         .background(Palette.screen)
-        .task { await viewModel.loadNearbyLots() }
+        .task(id: networkMonitor.isConnected) { await viewModel.loadNearbyLots() }
         .task(id: alerts.state) {
             guard alerts.state == .watching else { return }
             while !Task.isCancelled {
@@ -104,6 +105,9 @@ struct CampusFullView: View {
                 .font(AppFont.caption)
                 .foregroundStyle(Palette.muted)
         } else {
+            if viewModel.nearbyLotsFromCache, let fetchedAt = viewModel.nearbyLotsFetchedAt {
+                SavedPill(savedAt: fetchedAt)
+            }
             VStack(spacing: 8) {
                 ForEach(viewModel.nearbyLots) { lot in
                     NearbyParkingCard(

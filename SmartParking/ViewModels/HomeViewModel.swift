@@ -26,6 +26,8 @@ final class HomeViewModel: ObservableObject {
     @Published private(set) var nearbyLots: [NearbyLot] = []
     @Published private(set) var isLoadingNearbyLots = false
     @Published private(set) var nearbyLotsErrorMessage: String?
+    @Published private(set) var nearbyLotsFetchedAt: Date?
+    @Published private(set) var nearbyLotsFromCache = false
 
     // Accessible and EV spots
     @Published private(set) var specialSpotsAvailability: SpecialSpotsAvailabilityResponse?
@@ -298,7 +300,10 @@ final class HomeViewModel: ObservableObject {
         defer { isLoadingNearbyLots = false }
 
         do {
-            nearbyLots = try await service.nearbyLots().value
+            let result = try await service.nearbyLots()
+            nearbyLots = result.value
+            nearbyLotsFetchedAt = result.fetchedAt
+            nearbyLotsFromCache = result.fromCache
         } catch {
             nearbyLotsErrorMessage = error.localizedDescription
         }
