@@ -41,29 +41,44 @@ final class ReservationViewModel: ObservableObject {
     @Published private(set) var parkedCar: ParkedCar?
     @Published private(set) var isLoadingVehicle = false
     @Published private(set) var vehicleErrorMessage: String?
+    @Published private(set) var vehicleSavedAt: Date?
     @Published private(set) var isPerformingAction = false
     @Published private(set) var error: ReservationViewModelError?
+    @Published private var activeSavedAt: Date?
+    @Published private var historySavedAt: Date?
 
     private let service: ReservationServicing
+    private let reader: CachedReservationReading
     private let locationService: LocationServicing
     private let parkedCarStore: ParkedCarStoring
     private let telemetry: TelemetryService
     private let flowTracker: ReservationFlowTracking
     private var countdownTask: Task<Void, Never>?
+    private var userId: String?
 
     init(
         service: ReservationServicing,
+        reader: CachedReservationReading? = nil,
         locationService: LocationServicing = LocationService.shared,
         parkedCarStore: ParkedCarStoring = ParkedCarStore.shared,
         telemetry: TelemetryService? = nil,
         flowTracker: ReservationFlowTracking? = nil
     ) {
         self.service = service
+        self.reader = reader ?? CachedReservationReader(service: service)
         self.locationService = locationService
         self.parkedCarStore = parkedCarStore
         self.telemetry = telemetry ?? .shared
         self.flowTracker = flowTracker ?? CrashMonitor.shared
         parkedCar = parkedCarStore.parkedCar
+    }
+
+    var savedAt: Date? {
+        [activeSavedAt, historySavedAt].compactMap { $0 }.min()
+    }
+
+    func setUser(id: String?) {
+        userId = id
     }
 
     func reserveScreenOpened() {
@@ -80,13 +95,20 @@ final class ReservationViewModel: ObservableObject {
         history = []
         vehicle = nil
         vehicleErrorMessage = nil
+        vehicleSavedAt = nil
         error = nil
+        userId = nil
+        activeSavedAt = nil
+        historySavedAt = nil
     }
 
     func loadActive() async {
         error = nil
+        guard let userId else { return }
         do {
-            setActiveReservation(try await service.active())
+            let fetched = try await reader.active(userId: userId)
+            setActiveReservation(fetched.value)
+            activeSavedAt = fetched.fromCache ? fetched.fetchedAt : nil
         } catch {
             self.error = .requestFailed(error.localizedDescription)
         }
@@ -101,6 +123,7 @@ final class ReservationViewModel: ObservableObject {
             setActiveReservation(reservation)
             history.removeAll { $0.id == reservation.id }
             history.insert(reservation, at: 0)
+            saveSnapshot()
         } catch let serviceError as ReservationServiceError {
             trackReservationRequest(since: start, error: serviceError)
             switch serviceError {
@@ -140,8 +163,11 @@ final class ReservationViewModel: ObservableObject {
     }
 
     func loadHistory() async {
+        guard let userId else { return }
         do {
-            history = try await service.history()
+            let fetched = try await reader.history(userId: userId)
+            history = fetched.value
+            historySavedAt = fetched.fromCache ? fetched.fetchedAt : nil
         } catch {
             self.error = .requestFailed(error.localizedDescription)
         }
@@ -172,6 +198,7 @@ final class ReservationViewModel: ObservableObject {
         if activeReservation?.status == .cancelled || activeReservation?.status == .released {
             parkedCarStore.clear()
             parkedCar = nil
+            forgetVehicle()
             await loadVehicle()
         }
     }
@@ -181,10 +208,31 @@ final class ReservationViewModel: ObservableObject {
         vehicleErrorMessage = nil
         defer { isLoadingVehicle = false }
         do {
-            vehicle = try await service.vehicle()
+            guard let userId else {
+                vehicle = try await service.vehicle()
+                vehicleSavedAt = nil
+                return
+            }
+            let fetched = try await reader.vehicle(userId: userId)
+            vehicle = fetched.value
+            vehicleSavedAt = fetched.fromCache && fetched.value != nil ? fetched.fetchedAt : nil
         } catch {
             vehicleErrorMessage = error.localizedDescription
         }
+    }
+
+    private func forgetVehicle() {
+        vehicle = nil
+        vehicleSavedAt = nil
+        guard let userId else { return }
+        reader.clearVehicle(userId: userId)
+    }
+
+    private func saveSnapshot() {
+        guard let userId else { return }
+        reader.save(active: activeReservation, history: history, userId: userId)
+        activeSavedAt = nil
+        historySavedAt = nil
     }
 
     private func performReservationAction(_ action: () async throws -> Reservation) async {
@@ -200,6 +248,7 @@ final class ReservationViewModel: ObservableObject {
             } else {
                 history.insert(reservation, at: 0)
             }
+            saveSnapshot()
         } catch {
             self.error = .requestFailed(error.localizedDescription)
         }

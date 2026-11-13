@@ -24,6 +24,7 @@
 		597417B176BB63A605A3EA9E /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE10FBB9AA075CE9397D9BDD /* APIClient.swift */; };
 		6432B74F50D933DD702B5BE0 /* ReservationViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 028EBFD34E1CCAEE4FF4554C /* ReservationViewModel.swift */; };
 		6493D1497CB148D77A489501 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA91CC8380974220F8463130 /* ProfileView.swift */; };
+		65325463835AE59D8138CB26 /* CachedReservationReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0B4416C12167C85B03048BA /* CachedReservationReader.swift */; };
 		66CF15B2AE45AE44460114EC /* RegisterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7496320DD17E3BD3BA7A83B2 /* RegisterView.swift */; };
 		6AA95F1F080D03D8F5B60F96 /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDB0912E6FB8BD424BC9D824 /* Typography.swift */; };
 		6CCA18F06FAD24487502ED6F /* ActionQueueStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CC2176DC0ADB0AB41CCD493 /* ActionQueueStore.swift */; };
@@ -97,6 +98,7 @@
 		A4B60FF382295B9AAB13C2F0 /* FindSpotModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindSpotModels.swift; sourceTree = "<group>"; };
 		AD48138B295B21646737C805 /* ParkingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkingService.swift; sourceTree = "<group>"; };
 		AE45C95ACDB0922C6DAF6108 /* AuthValidation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthValidation.swift; sourceTree = "<group>"; };
+		B0B4416C12167C85B03048BA /* CachedReservationReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachedReservationReader.swift; sourceTree = "<group>"; };
 		B13CBF3E6156A1E37ECCA80F /* SpotCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotCell.swift; sourceTree = "<group>"; };
 		B8EA5DE185C190EBBB9B7543 /* ParkingMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkingMapView.swift; sourceTree = "<group>"; };
 		C57417A1C59B2AF969E87A02 /* SmartParkingApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartParkingApp.swift; sourceTree = "<group>"; };
@@ -168,6 +170,7 @@
 				3CC2176DC0ADB0AB41CCD493 /* ActionQueueStore.swift */,
 				CE10FBB9AA075CE9397D9BDD /* APIClient.swift */,
 				919709B4035C0C70D24CADD6 /* AuthService.swift */,
+				B0B4416C12167C85B03048BA /* CachedReservationReader.swift */,
 				6B1875368A80F6268E91B431 /* CampusAlertService.swift */,
 				0007BE44DD768E0C0A442CC8 /* CrashMonitor.swift */,
 				5931C53022DF94FA3110F8F5 /* LocationService.swift */,
@@ -333,6 +336,7 @@
 				190FB64A496BE92C69B6CD02 /* AuthService.swift in Sources */,
 				EA4932CCEE2F704CAFE0C956 /* AuthValidation.swift in Sources */,
 				A6A8D7F3E23EC520973A206A /* AuthViewModel.swift in Sources */,
+				65325463835AE59D8138CB26 /* CachedReservationReader.swift in Sources */,
 				A32943DD9650C0ACC40FC4F3 /* CampusAlertService.swift in Sources */,
 				784D1D84AB77BD4CAF898A77 /* CampusFullView.swift in Sources */,
 				CF1C43534D6FB929262318CB /* CrashMonitor.swift in Sources */,

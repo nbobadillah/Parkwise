@@ -156,6 +156,10 @@ struct ReserveSpotView: View {
                 .font(AppFont.body)
                 .foregroundStyle(Palette.muted)
                 .lineLimit(1)
+
+            if let savedAt = viewModel.savedAt {
+                SavedPill(savedAt: savedAt)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 16)

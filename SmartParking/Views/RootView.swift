@@ -152,6 +152,7 @@ struct RootView: View {
             }
 
             showSignIn = false
+            reservationViewModel.setUser(id: authViewModel.user?.id)
             await reservationViewModel.loadActive()
             await reservationViewModel.loadHistory()
         }
