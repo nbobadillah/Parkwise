@@ -140,7 +140,11 @@ struct WeekPlanView: View {
                     .tint(Palette.accent)
                     .frame(maxWidth: .infinity, minHeight: 160)
             } else {
-                grid
+                WeekHeatMapGrid(
+                    hours: viewModel.heatMap.hours,
+                    rows: viewModel.heatMap.rows
+                )
+                .equatable()
 
                 WeekHeatLegend()
                     .padding(.top, 4)
@@ -153,42 +157,6 @@ struct WeekPlanView: View {
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .cardStyle()
-    }
-
-    private var grid: some View {
-        VStack(spacing: WeekHeatStyle.spacing) {
-            HStack(spacing: WeekHeatStyle.spacing) {
-                Color.clear
-                    .frame(width: WeekHeatStyle.labelWidth, height: 1)
-
-                ForEach(viewModel.heatMap.hours, id: \.self) { hour in
-                    Text(hourLabel(hour))
-                        .font(AppFont.monoData)
-                        .foregroundStyle(Palette.muted)
-                        .lineLimit(1)
-                        .fixedSize()
-                        .frame(maxWidth: .infinity)
-                }
-            }
-            .padding(.bottom, 2)
-
-            ForEach(viewModel.heatMap.rows) { row in
-                HStack(spacing: WeekHeatStyle.spacing) {
-                    Text(row.label)
-                        .font(AppFont.body)
-                        .foregroundStyle(Palette.ink)
-                        .frame(width: WeekHeatStyle.labelWidth, alignment: .leading)
-
-                    if row.isSaved {
-                        ForEach(row.cells) { cell in
-                            WeekHeatCellView(cell: cell)
-                        }
-                    } else {
-                        NotSavedStrip()
-                    }
-                }
-            }
-        }
     }
 
     private var bestCard: some View {
@@ -246,11 +214,6 @@ struct WeekPlanView: View {
         }
         .padding(24)
         .presentationDetents([.medium])
-    }
-
-    private func hourLabel(_ hour: Int) -> String {
-        guard let first = viewModel.heatMap.hours.first else { return "" }
-        return (hour - first) % 2 == 0 ? "\(hour)" : ""
     }
 
     private func use(_ slot: BestSlot) {

@@ -71,6 +71,7 @@
 		B367DBF4CA996C09DD0BE09A /* WeekPlanViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E8BC4ECACBAA0D447D88A21 /* WeekPlanViewModel.swift */; };
 		31500AE2D232D84303CDCBC1 /* WeekPlanComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC8A67720CCBD14FACD905C /* WeekPlanComponents.swift */; };
 		8FA880AA3EF07ACB127B02F3 /* WeekPlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0264CACB0DBCAAADBC94BA13 /* WeekPlanView.swift */; };
+		C9466F2969D58325E0C95E3C /* WeekHeatMapGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63C3C85E9D64D956AA114D86 /* WeekHeatMapGrid.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -140,6 +141,7 @@
 		9E8BC4ECACBAA0D447D88A21 /* WeekPlanViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekPlanViewModel.swift; sourceTree = "<group>"; };
 		DBC8A67720CCBD14FACD905C /* WeekPlanComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekPlanComponents.swift; sourceTree = "<group>"; };
 		0264CACB0DBCAAADBC94BA13 /* WeekPlanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekPlanView.swift; sourceTree = "<group>"; };
+		63C3C85E9D64D956AA114D86 /* WeekHeatMapGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekHeatMapGrid.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -250,6 +252,7 @@
 				F140173A54963A435336B326 /* RecommendationCard.swift */,
 				B13CBF3E6156A1E37ECCA80F /* SpotCell.swift */,
 				DBC8A67720CCBD14FACD905C /* WeekPlanComponents.swift */,
+				63C3C85E9D64D956AA114D86 /* WeekHeatMapGrid.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -417,6 +420,7 @@
 				B367DBF4CA996C09DD0BE09A /* WeekPlanViewModel.swift in Sources */,
 				31500AE2D232D84303CDCBC1 /* WeekPlanComponents.swift in Sources */,
 				8FA880AA3EF07ACB127B02F3 /* WeekPlanView.swift in Sources */,
+				C9466F2969D58325E0C95E3C /* WeekHeatMapGrid.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
