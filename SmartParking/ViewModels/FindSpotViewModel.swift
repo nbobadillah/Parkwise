@@ -118,6 +118,8 @@ final class FindSpotViewModel: ObservableObject {
             isLoading = false
         }
 
+        let service = service
+
         do {
             // Descargar todas las plazas sin filtrar desde el backend.
             let fetchedResults = try await withThrowingTaskGroup(

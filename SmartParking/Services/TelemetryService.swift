@@ -107,6 +107,39 @@ final class TelemetryService {
         track("map_loaded", properties)
     }
 
+    func trackReservationRequest(durationMs: Int, errorType: String?) {
+        var properties = deviceProperties
+        properties["durationMs"] = .int(durationMs)
+        properties["success"] = .bool(errorType == nil)
+        if let errorType {
+            properties["errorType"] = .string(errorType)
+        }
+        track("reservation_request", properties)
+    }
+
+    func trackReserveOpened() {
+        track("reserve_opened", deviceProperties)
+    }
+
+    func trackAppCrash(inReservationFlow: Bool, reason: String?) {
+        var properties = deviceProperties
+        properties["inReservationFlow"] = .bool(inReservationFlow)
+        if let reason {
+            properties["reason"] = .string(String(reason.prefix(Self.maxStringLength)))
+        }
+        track("app_crash", properties)
+    }
+
+    private static let maxStringLength = 200
+
+    private var deviceProperties: [String: TelemetryValue] {
+        [
+            "deviceModel": .string(Self.deviceModel),
+            "osVersion": .string(UIDevice.current.systemVersion),
+            "platform": .string("ios")
+        ]
+    }
+
     func flush() async {
         guard !isFlushing else { return }
         isFlushing = true

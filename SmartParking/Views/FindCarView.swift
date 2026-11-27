@@ -79,7 +79,7 @@ struct FindCarView: View {
         .task(id: networkMonitor.isConnected) {
             await viewModel.loadVehicle()
         }
-        .task(id: (vehicleLevelCode ?? "") + (destinationID ?? "")) {
+        .task(id: "\(vehicleLevelCode ?? "")|\(destinationID ?? "")|\(networkMonitor.isConnected)") {
             guard let vehicleLevelCode else { return }
             parkingViewModel.destination = destinationID
             isLoadingSpots = true
@@ -97,6 +97,9 @@ struct FindCarView: View {
                 .font(AppFont.body)
                 .foregroundStyle(Palette.muted)
                 .lineLimit(1)
+            if let savedAt = viewModel.vehicleSavedAt {
+                SavedPill(savedAt: savedAt)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 16)
@@ -155,9 +158,17 @@ struct FindCarView: View {
         return "Parked \(parkedAt.formatted(.dateTime.month(.abbreviated).day())) at \(parkedAt.formatted(date: .omitted, time: .shortened))"
     }
 
+    @ViewBuilder
+    private var savedSpotsPill: some View {
+        if parkingViewModel.fromCache, let fetchedAt = parkingViewModel.fetchedAt {
+            SavedPill(savedAt: fetchedAt)
+        }
+    }
+
     private func floorCard(_ vehicle: ParkedVehicle) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             CaptionLabel(text: "Level \(vehicle.levelCode) — Floor view")
+            savedSpotsPill
             FindCarFloorMap(
                 zones: parkingViewModel.zones,
                 selectedSpotID: vehicle.spotId,
@@ -180,6 +191,7 @@ struct FindCarView: View {
     private func floorCard(_ parkedCar: ParkedCar) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             CaptionLabel(text: "Level \(parkedCar.levelCode ?? "—") — Floor view")
+            savedSpotsPill
             FindCarFloorMap(
                 zones: parkingViewModel.zones,
                 selectedSpotID: localSpot(for: parkedCar)?.id,
