@@ -27,6 +27,10 @@
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Parkwise uses your location to remember where you parked and guide you back to your car.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>ParkWise uses the microphone to search for a parking spot by voice.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>ParkWise turns what you say into a search for a parking spot.</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>

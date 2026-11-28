@@ -56,6 +56,10 @@ final class TelemetryService {
     }
 
     func track(_ name: String, _ properties: [String: TelemetryValue] = [:]) {
+        var properties = properties
+        if properties["occurredAt"] == nil {
+            properties["occurredAt"] = .string(Date().formatted(.iso8601))
+        }
         pending.append(TelemetryEvent(name: name, properties: properties))
         if pending.count > maxPending {
             pending.removeFirst(pending.count - maxPending)
@@ -128,6 +132,43 @@ final class TelemetryService {
             properties["reason"] = .string(String(reason.prefix(Self.maxStringLength)))
         }
         track("app_crash", properties)
+    }
+
+    func trackVoiceRecognition(outcome: String, latencyMs: Int, level: String?) {
+        var properties = deviceProperties
+        properties["outcome"] = .string(outcome)
+        properties["latencyMs"] = .int(latencyMs)
+        if let level {
+            properties["level"] = .string(level)
+        }
+        track("voice_recognition", properties)
+    }
+
+    func trackSpotSearch(searchId: String, mode: String, resultCount: Int, fromCache: Bool, offline: Bool, voiceFallback: Bool) {
+        track("spot_search", [
+            "platform": .string("ios"),
+            "searchId": .string(searchId),
+            "mode": .string(mode),
+            "resultCount": .int(resultCount),
+            "fromCache": .bool(fromCache),
+            "offline": .bool(offline),
+            "voiceFallback": .bool(voiceFallback)
+        ])
+    }
+
+    func trackSpotSelected(levelCode: String, spotCode: String, searchId: String?, mode: String?) {
+        var properties: [String: TelemetryValue] = [
+            "platform": .string("ios"),
+            "levelCode": .string(levelCode),
+            "spotCode": .string(spotCode)
+        ]
+        if let searchId {
+            properties["searchId"] = .string(searchId)
+        }
+        if let mode {
+            properties["mode"] = .string(mode)
+        }
+        track("spot_selected", properties)
     }
 
     private static let maxStringLength = 200
