@@ -7,7 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		00B234BBAFA1BD7917E474C6 /* DaySparseArray.swift in Sources */ = {isa = PBXBuildFile; fileRef = A12CC8612792DBD9603B7662 /* DaySparseArray.swift */; };
 		04121B156279F0F0920A22C5 /* PhraseLRU.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B911856F03FC20FBE2586D5 /* PhraseLRU.swift */; };
+		0420304D7CC59C677AED1D6B /* WeekForecastFileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC3071CABDABB59A0BE219E6 /* WeekForecastFileStore.swift */; };
 		06B50B6FE3640169B86F29C4 /* ResponseCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC58F4E3CBAD7CF19E7962D /* ResponseCache.swift */; };
 		07D51D5F9677FA2F679B03C1 /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88535BA91C5335FBEAFBE178 /* SessionStore.swift */; };
 		0AEBAF64922ACB40AE040FC2 /* VoiceQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 803B183DAC228ECAD91B3351 /* VoiceQuery.swift */; };
@@ -15,17 +17,21 @@
 		190FB64A496BE92C69B6CD02 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 919709B4035C0C70D24CADD6 /* AuthService.swift */; };
 		1A3B02E972F8ABAEC39B5C33 /* ForecastCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = F70BB685EEB3B6DA34468D8E /* ForecastCard.swift */; };
 		1B342E23B274D1FFACABE87A /* RecentVoiceSearchStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EAA80DF2A529E50F233BCBB /* RecentVoiceSearchStoreTests.swift */; };
+		1FF2BDECA1219E8FB148CF30 /* WeekForecastModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 487F68D1E7DDF77BFE1982D3 /* WeekForecastModels.swift */; };
 		216E46933F1E6E1F2AECAEFD /* ParkingMapViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 630260762228BB1C0EDFBCD5 /* ParkingMapViewModel.swift */; };
 		221FABE897A0DBC7D14123E0 /* PendingAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB3FCBC8AEAB0AC9A6AD1CAE /* PendingAction.swift */; };
 		31B837CF95B30EA01A94CD49 /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2FEE8F9F2F4BDC28C2BB803 /* HomeViewModel.swift */; };
 		33123A731C10F5AFA77124DD /* FindSpotViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8069442E6B23B43B0A1E421 /* FindSpotViewModel.swift */; };
 		35381C3C1487FC12F4010758 /* PhraseInterpreter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 670CBBF7635940B0A6787499 /* PhraseInterpreter.swift */; };
 		354E16BCCF8CCBCAABF887B4 /* ActionQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD039C910EF5813DF6392EF5 /* ActionQueue.swift */; };
+		3A0506228471211F5F6AEF6C /* WeekHeatMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FC35763EEE975AD4F92D3DD /* WeekHeatMap.swift */; };
 		3A0B004A1F9957299E01CA3B /* RecentVoiceSearchStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0EDB23BD88C9688A6355B33 /* RecentVoiceSearchStore.swift */; };
 		3BA9228B6589A65FE66AA9CC /* VoiceSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6318A6E3400D6FE209817861 /* VoiceSearchView.swift */; };
+		3D9AE0A773F85627F52947FE /* WeekPlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FD068EF49FFB9F9012DCB9E /* WeekPlanView.swift */; };
 		41FDA3BC121946D111AE6057 /* ParkingModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4E992344706AFAE7CC607AE /* ParkingModels.swift */; };
 		4903422A09A1B78A77CEDED2 /* SmartParkingApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C57417A1C59B2AF969E87A02 /* SmartParkingApp.swift */; };
 		496B8D74429E1688281FC927 /* VoiceQueryParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = B88D149A94123AF1269F43E0 /* VoiceQueryParser.swift */; };
+		52C8D84CEF3B699246017CDD /* WeekPlanViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E6B42E85E24287174B19123 /* WeekPlanViewModel.swift */; };
 		543AE446B4617058C88C1939 /* Palette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A4E252E8356EE9553E276D4 /* Palette.swift */; };
 		591EA758D462FED90F0A6EDF /* AuthComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A73A5B6567D1A2F0038190C /* AuthComponents.swift */; };
 		597417B176BB63A605A3EA9E /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE10FBB9AA075CE9397D9BDD /* APIClient.swift */; };
@@ -41,8 +47,10 @@
 		735AFDD16F48310227AD775F /* LotPhoto.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB7DC2249F184080EAAF00A4 /* LotPhoto.swift */; };
 		7657682BB63212ED1A3C8B22 /* TelemetryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0B3346456851875087EEE0A /* TelemetryService.swift */; };
 		784D1D84AB77BD4CAF898A77 /* CampusFullView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 444CD6116C0729F6DD7DCEAC /* CampusFullView.swift */; };
+		79E3612E855D60BF31B1E157 /* WeekHeatMapGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABF12ADED8D899333C05CDD7 /* WeekHeatMapGrid.swift */; };
 		7DFE5C6C1F82A4348CD34D36 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F16026EB0059B8961CF187A4 /* HomeView.swift */; };
 		8657CD8FB5B66DB789B38B58 /* LevelCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92F8616FCC45CD2E2248B1E8 /* LevelCard.swift */; };
+		89BFEE1C898FC5A350FAF9D5 /* WeekPlanComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A4A5868C5F780F923342C40 /* WeekPlanComponents.swift */; };
 		8D8F90A896A194AC19674818 /* AppTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDAB4AE8ABAED6F071013CA4 /* AppTabBar.swift */; };
 		91636DAFEF03B3FF70266C43 /* ParkingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD48138B295B21646737C805 /* ParkingService.swift */; };
 		A32943DD9650C0ACC40FC4F3 /* CampusAlertService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B1875368A80F6268E91B431 /* CampusAlertService.swift */; };
@@ -67,11 +75,13 @@
 		DB2C9C73B6EDACAEB6AD64EB /* AccessibleEVSpotsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81DBF1002C43641B39D2CEFC /* AccessibleEVSpotsView.swift */; };
 		DC77BD830473A939C6711389 /* FindSpotModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4B60FF382295B9AAB13C2F0 /* FindSpotModels.swift */; };
 		DFC944F6630D70C17E0F67D9 /* ReserveSpotView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7842261127B8C973F3014152 /* ReserveSpotView.swift */; };
+		E995E7485FB2236B9AD4AD24 /* WeekPlanLevelStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35FAA0FD1F52E964A1F74AC2 /* WeekPlanLevelStore.swift */; };
 		EA4932CCEE2F704CAFE0C956 /* AuthValidation.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE45C95ACDB0922C6DAF6108 /* AuthValidation.swift */; };
 		ECB1C14FE39221B04A23332A /* SpeechRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D011C897D2BA9693A3C84CF /* SpeechRecognizer.swift */; };
 		ED44D0F10ECFC99D879266F5 /* ReservationModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0045FE43CF72965E42503372 /* ReservationModels.swift */; };
 		EEFEF1EF55C09BB4600540A2 /* SpotFilterStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3FCB5A5D41D2ED2F4CF6577 /* SpotFilterStrategy.swift */; };
 		F4E0C36E8B26ABC4860474E0 /* VoiceQueryParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7D8DDB7FA919C21898E322A /* VoiceQueryParserTests.swift */; };
+		F6461E8BB5D44B0232C47562 /* WeekForecastService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C49D28D16331AABBBF563AA2 /* WeekForecastService.swift */; };
 		FC1FB4D7510C072F41B3E2F3 /* Pills.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31C5B08A176B969F4F141F23 /* Pills.swift */; };
 		FF02896590A0D37C13A9F4B3 /* FindSpotView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 209BB54A3C5D0D7BD82DB70D /* FindSpotView.swift */; };
 /* End PBXBuildFile section */
@@ -91,22 +101,27 @@
 		0045FE43CF72965E42503372 /* ReservationModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationModels.swift; sourceTree = "<group>"; };
 		028EBFD34E1CCAEE4FF4554C /* ReservationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationViewModel.swift; sourceTree = "<group>"; };
 		0D011C897D2BA9693A3C84CF /* SpeechRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechRecognizer.swift; sourceTree = "<group>"; };
+		0FC35763EEE975AD4F92D3DD /* WeekHeatMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekHeatMap.swift; sourceTree = "<group>"; };
 		1A73A5B6567D1A2F0038190C /* AuthComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthComponents.swift; sourceTree = "<group>"; };
 		209BB54A3C5D0D7BD82DB70D /* FindSpotView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindSpotView.swift; sourceTree = "<group>"; };
 		22C1CED47E0F1E3C97E046AF /* VoiceSearchViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceSearchViewModel.swift; sourceTree = "<group>"; };
 		23F0EB4ED988403DA029EA93 /* SmartParkingTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SmartParkingTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		29E5E3EF379AE2A30EB0D071 /* PhraseLRUTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhraseLRUTests.swift; sourceTree = "<group>"; };
 		2CCD26713F736832E9B8788A /* AuthViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewModel.swift; sourceTree = "<group>"; };
+		2FD068EF49FFB9F9012DCB9E /* WeekPlanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekPlanView.swift; sourceTree = "<group>"; };
 		31C5B08A176B969F4F141F23 /* Pills.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pills.swift; sourceTree = "<group>"; };
 		33A204A90F32019041329614 /* SpotModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotModels.swift; sourceTree = "<group>"; };
 		34D2DFAB7381760043AA924F /* FindSpotComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindSpotComponents.swift; sourceTree = "<group>"; };
+		35FAA0FD1F52E964A1F74AC2 /* WeekPlanLevelStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekPlanLevelStore.swift; sourceTree = "<group>"; };
 		3618048DCA5510CC39BDFB12 /* FindCarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindCarView.swift; sourceTree = "<group>"; };
 		3B911856F03FC20FBE2586D5 /* PhraseLRU.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhraseLRU.swift; sourceTree = "<group>"; };
 		3CC2176DC0ADB0AB41CCD493 /* ActionQueueStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionQueueStore.swift; sourceTree = "<group>"; };
 		444CD6116C0729F6DD7DCEAC /* CampusFullView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CampusFullView.swift; sourceTree = "<group>"; };
+		487F68D1E7DDF77BFE1982D3 /* WeekForecastModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekForecastModels.swift; sourceTree = "<group>"; };
 		4EAE97E47504FC45A498F55C /* LotPhotoViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LotPhotoViewModel.swift; sourceTree = "<group>"; };
 		4FB94EF408FBBB4EF9BE2F3A /* ReservationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationService.swift; sourceTree = "<group>"; };
 		5931C53022DF94FA3110F8F5 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
+		5E6B42E85E24287174B19123 /* WeekPlanViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekPlanViewModel.swift; sourceTree = "<group>"; };
 		611A4A43675686E0660C91E8 /* SmartParking.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = SmartParking.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		630260762228BB1C0EDFBCD5 /* ParkingMapViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkingMapViewModel.swift; sourceTree = "<group>"; };
 		6318A6E3400D6FE209817861 /* VoiceSearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceSearchView.swift; sourceTree = "<group>"; };
@@ -114,6 +129,7 @@
 		6B1875368A80F6268E91B431 /* CampusAlertService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CampusAlertService.swift; sourceTree = "<group>"; };
 		7496320DD17E3BD3BA7A83B2 /* RegisterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterView.swift; sourceTree = "<group>"; };
 		7842261127B8C973F3014152 /* ReserveSpotView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReserveSpotView.swift; sourceTree = "<group>"; };
+		7A4A5868C5F780F923342C40 /* WeekPlanComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekPlanComponents.swift; sourceTree = "<group>"; };
 		7BE9ED5ACBE583CF9CD272F9 /* LotImageCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LotImageCache.swift; sourceTree = "<group>"; };
 		803B183DAC228ECAD91B3351 /* VoiceQuery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceQuery.swift; sourceTree = "<group>"; };
 		81DBF1002C43641B39D2CEFC /* AccessibleEVSpotsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibleEVSpotsView.swift; sourceTree = "<group>"; };
@@ -124,9 +140,11 @@
 		95330879F0704F372978A43E /* FindCarComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindCarComponents.swift; sourceTree = "<group>"; };
 		9A4E252E8356EE9553E276D4 /* Palette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Palette.swift; sourceTree = "<group>"; };
 		9EAA80DF2A529E50F233BCBB /* RecentVoiceSearchStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecentVoiceSearchStoreTests.swift; sourceTree = "<group>"; };
+		A12CC8612792DBD9603B7662 /* DaySparseArray.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DaySparseArray.swift; sourceTree = "<group>"; };
 		A24D379211F813958AEFFAA7 /* ParkedCarStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkedCarStore.swift; sourceTree = "<group>"; };
 		A2FEE8F9F2F4BDC28C2BB803 /* HomeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModel.swift; sourceTree = "<group>"; };
 		A4B60FF382295B9AAB13C2F0 /* FindSpotModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindSpotModels.swift; sourceTree = "<group>"; };
+		ABF12ADED8D899333C05CDD7 /* WeekHeatMapGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekHeatMapGrid.swift; sourceTree = "<group>"; };
 		AD48138B295B21646737C805 /* ParkingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkingService.swift; sourceTree = "<group>"; };
 		AE45C95ACDB0922C6DAF6108 /* AuthValidation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthValidation.swift; sourceTree = "<group>"; };
 		B0B4416C12167C85B03048BA /* CachedReservationReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachedReservationReader.swift; sourceTree = "<group>"; };
@@ -134,6 +152,7 @@
 		B13CBF3E6156A1E37ECCA80F /* SpotCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotCell.swift; sourceTree = "<group>"; };
 		B88D149A94123AF1269F43E0 /* VoiceQueryParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceQueryParser.swift; sourceTree = "<group>"; };
 		B8EA5DE185C190EBBB9B7543 /* ParkingMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkingMapView.swift; sourceTree = "<group>"; };
+		C49D28D16331AABBBF563AA2 /* WeekForecastService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekForecastService.swift; sourceTree = "<group>"; };
 		C57417A1C59B2AF969E87A02 /* SmartParkingApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartParkingApp.swift; sourceTree = "<group>"; };
 		C8069442E6B23B43B0A1E421 /* FindSpotViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindSpotViewModel.swift; sourceTree = "<group>"; };
 		CB3FCBC8AEAB0AC9A6AD1CAE /* PendingAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingAction.swift; sourceTree = "<group>"; };
@@ -150,6 +169,7 @@
 		E4E992344706AFAE7CC607AE /* ParkingModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkingModels.swift; sourceTree = "<group>"; };
 		E56709BD7C58A9634AB64F09 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		EBA60E9FD350426E26506664 /* AppUser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUser.swift; sourceTree = "<group>"; };
+		EC3071CABDABB59A0BE219E6 /* WeekForecastFileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekForecastFileStore.swift; sourceTree = "<group>"; };
 		F0B3346456851875087EEE0A /* TelemetryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryService.swift; sourceTree = "<group>"; };
 		F140173A54963A435336B326 /* RecommendationCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationCard.swift; sourceTree = "<group>"; };
 		F16026EB0059B8961CF187A4 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
@@ -170,6 +190,7 @@
 				630260762228BB1C0EDFBCD5 /* ParkingMapViewModel.swift */,
 				028EBFD34E1CCAEE4FF4554C /* ReservationViewModel.swift */,
 				22C1CED47E0F1E3C97E046AF /* VoiceSearchViewModel.swift */,
+				5E6B42E85E24287174B19123 /* WeekPlanViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -209,6 +230,7 @@
 				B0B4416C12167C85B03048BA /* CachedReservationReader.swift */,
 				6B1875368A80F6268E91B431 /* CampusAlertService.swift */,
 				0007BE44DD768E0C0A442CC8 /* CrashMonitor.swift */,
+				A12CC8612792DBD9603B7662 /* DaySparseArray.swift */,
 				5931C53022DF94FA3110F8F5 /* LocationService.swift */,
 				7BE9ED5ACBE583CF9CD272F9 /* LotImageCache.swift */,
 				DADF73D1434D94B2971869B9 /* NetworkMonitor.swift */,
@@ -223,6 +245,9 @@
 				0D011C897D2BA9693A3C84CF /* SpeechRecognizer.swift */,
 				F0B3346456851875087EEE0A /* TelemetryService.swift */,
 				B88D149A94123AF1269F43E0 /* VoiceQueryParser.swift */,
+				EC3071CABDABB59A0BE219E6 /* WeekForecastFileStore.swift */,
+				C49D28D16331AABBBF563AA2 /* WeekForecastService.swift */,
+				35FAA0FD1F52E964A1F74AC2 /* WeekPlanLevelStore.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -250,6 +275,7 @@
 				7842261127B8C973F3014152 /* ReserveSpotView.swift */,
 				E3685140C57C0209BD802F06 /* RootView.swift */,
 				6318A6E3400D6FE209817861 /* VoiceSearchView.swift */,
+				2FD068EF49FFB9F9012DCB9E /* WeekPlanView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -278,6 +304,8 @@
 				F140173A54963A435336B326 /* RecommendationCard.swift */,
 				B13CBF3E6156A1E37ECCA80F /* SpotCell.swift */,
 				E2403BB0279169017C28ED64 /* VoiceSearchComponents.swift */,
+				ABF12ADED8D899333C05CDD7 /* WeekHeatMapGrid.swift */,
+				7A4A5868C5F780F923342C40 /* WeekPlanComponents.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -286,6 +314,7 @@
 			isa = PBXGroup;
 			children = (
 				E3FCB5A5D41D2ED2F4CF6577 /* SpotFilterStrategy.swift */,
+				0FC35763EEE975AD4F92D3DD /* WeekHeatMap.swift */,
 			);
 			path = Strategies;
 			sourceTree = "<group>";
@@ -311,6 +340,7 @@
 				0045FE43CF72965E42503372 /* ReservationModels.swift */,
 				33A204A90F32019041329614 /* SpotModels.swift */,
 				803B183DAC228ECAD91B3351 /* VoiceQuery.swift */,
+				487F68D1E7DDF77BFE1982D3 /* WeekForecastModels.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -428,6 +458,7 @@
 				A32943DD9650C0ACC40FC4F3 /* CampusAlertService.swift in Sources */,
 				784D1D84AB77BD4CAF898A77 /* CampusFullView.swift in Sources */,
 				CF1C43534D6FB929262318CB /* CrashMonitor.swift in Sources */,
+				00B234BBAFA1BD7917E474C6 /* DaySparseArray.swift in Sources */,
 				A84B621964648F955BA4E5DC /* FindCarComponents.swift in Sources */,
 				B655AE035CB4C865BC784FA2 /* FindCarView.swift in Sources */,
 				D1B76E82717655BCCDFB0BAC /* FindSpotComponents.swift in Sources */,
@@ -478,6 +509,15 @@
 				AF81FF7EDDB2733D837BAD46 /* VoiceSearchComponents.swift in Sources */,
 				3BA9228B6589A65FE66AA9CC /* VoiceSearchView.swift in Sources */,
 				59A88FC89912EB3705F8EDD3 /* VoiceSearchViewModel.swift in Sources */,
+				0420304D7CC59C677AED1D6B /* WeekForecastFileStore.swift in Sources */,
+				1FF2BDECA1219E8FB148CF30 /* WeekForecastModels.swift in Sources */,
+				F6461E8BB5D44B0232C47562 /* WeekForecastService.swift in Sources */,
+				3A0506228471211F5F6AEF6C /* WeekHeatMap.swift in Sources */,
+				79E3612E855D60BF31B1E157 /* WeekHeatMapGrid.swift in Sources */,
+				89BFEE1C898FC5A350FAF9D5 /* WeekPlanComponents.swift in Sources */,
+				E995E7485FB2236B9AD4AD24 /* WeekPlanLevelStore.swift in Sources */,
+				3D9AE0A773F85627F52947FE /* WeekPlanView.swift in Sources */,
+				52C8D84CEF3B699246017CDD /* WeekPlanViewModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
