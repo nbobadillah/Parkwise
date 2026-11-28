@@ -12,8 +12,30 @@ enum MapRoute {
     case findCar
 }
 
+// MARK: - Report navigation
+
+private enum ReportRoute: Identifiable {
+    case form(userId: String, spot: ReportSpot)
+    case history(userId: String)
+
+    var id: String {
+        switch self {
+        case .form(let userId, let spot):
+            return "report-\(userId)-\(spot.id)"
+
+        case .history(let userId):
+            return "history-\(userId)"
+        }
+    }
+}
+
+// MARK: - Root view
+
+@MainActor
 struct RootView: View {
     @EnvironmentObject private var authViewModel: AuthViewModel
+    @EnvironmentObject private var reportCoordinator: ReportSessionCoordinator
+
     @ObservedObject private var locationService: LocationService
     @ObservedObject private var networkMonitor: NetworkMonitor
     @ObservedObject private var campusAlerts = CampusAlertService.shared
@@ -22,7 +44,9 @@ struct RootView: View {
     let parkingService: ParkingServicing
     let reservationService: ReservationServicing
     let actionQueue: ActionQueueing
-    private let weekForecastService: WeekForecastServicing = BackendWeekForecastService()
+
+    private let weekForecastService: WeekForecastServicing =
+        BackendWeekForecastService()
 
     @StateObject private var homeViewModel: HomeViewModel
     @StateObject private var reservationViewModel: ReservationViewModel
@@ -33,6 +57,10 @@ struct RootView: View {
     @State private var mapRoute: MapRoute = .floor
     @State private var selectedSpot: SpotListing?
     @State private var showSignIn = false
+
+    // Report navigation and submission feedback.
+    @State private var reportRoute: ReportRoute?
+    @State private var reportFeedback: ReportSubmission?
 
     init(
         parkingService: ParkingServicing,
@@ -46,8 +74,13 @@ struct RootView: View {
         self.reservationService = reservationService
         self.actionQueue = actionQueue
 
-        _locationService = ObservedObject(wrappedValue: locationService)
-        _networkMonitor = ObservedObject(wrappedValue: networkMonitor)
+        _locationService = ObservedObject(
+            wrappedValue: locationService
+        )
+
+        _networkMonitor = ObservedObject(
+            wrappedValue: networkMonitor
+        )
 
         _homeViewModel = StateObject(
             wrappedValue: HomeViewModel(
@@ -79,19 +112,32 @@ struct RootView: View {
                 }
                 .padding(16)
                 .background(
-                    RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
-                        .fill(Palette.accentSoft)
+                    RoundedRectangle(
+                        cornerRadius: Radius.card,
+                        style: .continuous
+                    )
+                    .fill(Palette.accentSoft)
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
-                        .stroke(Palette.accent.opacity(0.3), lineWidth: 1)
+                    RoundedRectangle(
+                        cornerRadius: Radius.card,
+                        style: .continuous
+                    )
+                    .stroke(Palette.accent.opacity(0.3), lineWidth: 1)
                 )
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
                 .padding(.bottom, 4)
             }
 
+            if tab == .map, let feedback = reportFeedback {
+                reportFeedbackBanner(feedback)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+            }
+
             content
+
             AppTabBar(selection: tabSelection)
         }
         .background(Palette.screen)
@@ -143,6 +189,11 @@ struct RootView: View {
                 )
             }
         }
+        .onChange(of: authViewModel.user?.id) { _, _ in
+            // Do not expose another account's report views or feedback.
+            reportRoute = nil
+            reportFeedback = nil
+        }
         .task(id: authViewModel.user?.id) {
             let userId = authViewModel.user?.id
 
@@ -154,13 +205,51 @@ struct RootView: View {
             }
 
             showSignIn = false
-            reservationViewModel.setUser(id: authViewModel.user?.id)
+
+            reservationViewModel.setUser(
+                id: authViewModel.user?.id
+            )
+
             await reservationViewModel.loadActive()
             await reservationViewModel.loadHistory()
         }
         .sheet(isPresented: $showSignIn) {
             LoginView()
                 .environmentObject(authViewModel)
+        }
+        .sheet(item: $reportRoute) { route in
+            switch route {
+
+            case .form(let userId, let spot):
+
+                if authViewModel.user?.id == userId {
+                    ReportProblemView(
+                        userId: userId,
+                        coordinator: reportCoordinator,
+                        levels: homeViewModel.levels,
+                        parkingService: parkingService,
+                        preselectedSpot: spot,
+                        onComplete: { submission in
+                            guard authViewModel.user?.id == userId else {
+                                return
+                            }
+
+                            reportFeedback = submission
+                        }
+                    )
+                }
+
+            case .history(let userId):
+
+                if authViewModel.user?.id == userId {
+                    MyReportsView(
+                        userId: userId,
+                        coordinator: reportCoordinator,
+                        levels: homeViewModel.levels,
+                        parkingService: parkingService
+                    )
+                }
+            }
         }
         .alert(item: $homeViewModel.locationPermissionPrompt) { prompt in
             switch prompt {
@@ -216,6 +305,91 @@ struct RootView: View {
 
         UIApplication.shared.open(settingsURL)
     }
+
+    // MARK: - Report navigation
+
+    private func openReport(_ spot: ReportSpot) {
+        guard let userId = authViewModel.user?.id else {
+            showSignIn = true
+            return
+        }
+
+        reportFeedback = nil
+
+        reportRoute = .form(
+            userId: userId,
+            spot: spot
+        )
+    }
+
+    private func openMyReports() {
+        guard let userId = authViewModel.user?.id else {
+            showSignIn = true
+            return
+        }
+
+        reportRoute = .history(userId: userId)
+    }
+
+    // MARK: - Report submission feedback
+
+    private func reportFeedbackBanner(
+        _ submission: ReportSubmission
+    ) -> some View {
+        let code = submission.report.displayCode
+
+        let message: String
+        let icon: String
+        let color: Color
+        let background: Color
+
+        switch submission.state {
+
+        case .sent:
+            message = "Report of \(code) sent. Thank you."
+            icon = "checkmark.circle.fill"
+            color = Palette.greenInk
+            background = Palette.greenSoft
+
+        case .waiting, .sending:
+            message = "Report of \(code) saved on this phone. It will be sent when you are back online."
+            icon = "arrow.triangle.2.circlepath"
+            color = Palette.accent
+            background = Palette.accentSoft
+
+        case .rejected:
+            message = "ParkWise did not accept the report of \(code). You can send it again with Report a problem."
+            icon = "exclamationmark.circle"
+            color = Palette.redInk
+            background = Palette.redSoft
+        }
+
+        return HStack(alignment: .top, spacing: 10) {
+            Image(systemName: icon)
+
+            Text(message)
+                .font(AppFont.body)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            Button {
+                reportFeedback = nil
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 12, weight: .semibold))
+                    .padding(8)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Dismiss report message")
+        }
+        .foregroundStyle(color)
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: Radius.card)
+                .fill(background)
+        )
+    }
+
+    // MARK: - Tab content
 
     @ViewBuilder
     private var content: some View {
@@ -285,6 +459,9 @@ struct RootView: View {
                     destinationID: homeViewModel.destinationID,
                     service: parkingService,
                     networkMonitor: networkMonitor,
+                    onReport: { spot in
+                        openReport(spot)
+                    },
                     onReserve: { spot in
                         selectedSpot = SpotListing(spot: spot)
                         tab = .reserve
@@ -349,7 +526,10 @@ struct RootView: View {
             if authViewModel.isAuthenticated {
                 ProfileView(
                     reservationViewModel: reservationViewModel,
-                    actionQueue: actionQueue
+                    actionQueue: actionQueue,
+                    onMyReports: {
+                        openMyReports()
+                    }
                 )
             } else {
                 SignInPromptView(

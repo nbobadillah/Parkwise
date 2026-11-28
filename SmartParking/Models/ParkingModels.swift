@@ -44,6 +44,9 @@ struct ParkingSpot: Identifiable, Equatable {
     let isEv: Bool
     let isVip: Bool
 
+    // Preserve the original backend data for spot reports.
+    let sourceSpot: Spot
+
     init(spot: Spot) {
         id = spot.id
         code = spot.code
@@ -54,6 +57,7 @@ struct ParkingSpot: Identifiable, Equatable {
         isAccessible = spot.isAccessible
         isEv = spot.isEv
         isVip = spot.isVip
+        sourceSpot = spot
     }
 
     func matches(_ filter: FindSpotFilter) -> Bool {

@@ -4,6 +4,10 @@ struct SpotCell: View {
     let spot: ParkingSpot
     let isSelected: Bool
     var highlight: Color?
+
+    // Allow selecting non-reservable spots for reporting.
+    var allowAllStates = false
+
     let action: () -> Void
 
     var body: some View {
@@ -26,7 +30,12 @@ struct SpotCell: View {
                 )
         }
         .buttonStyle(.plain)
-        .disabled(spot.state != .free && spot.state != .you && !isSelected)
+        .disabled(
+            !allowAllStates &&
+            spot.state != .free &&
+            spot.state != .you &&
+            !isSelected
+        )
         .accessibilityLabel("\(spot.code), \(stateTitle)")
     }
 
@@ -48,6 +57,7 @@ struct SpotCell: View {
     private var border: Color {
         if isSelected || spot.state == .you { return Palette.accent }
         if let highlight { return highlight }
+
         switch spot.state {
         case .free: return Palette.greenInk.opacity(0.4)
         case .taken: return Palette.line
@@ -58,7 +68,10 @@ struct SpotCell: View {
     }
 
     private var borderWidth: CGFloat {
-        if highlight != nil && !isSelected && spot.state != .you { return 2.5 }
+        if highlight != nil && !isSelected && spot.state != .you {
+            return 2.5
+        }
+
         return isSelected || spot.state == .you ? 1.5 : 1
     }
 
@@ -79,6 +92,9 @@ struct SpotRow: View {
     let row: ParkingRow
     let selectedSpotID: String?
     var highlight: (ParkingSpot) -> Color? = { _ in nil }
+
+    var allowAllStates = false
+
     let onSelect: (ParkingSpot) -> Void
 
     var body: some View {
@@ -87,12 +103,20 @@ struct SpotRow: View {
                 .font(AppFont.monoData)
                 .foregroundStyle(Palette.muted)
                 .frame(width: 14, alignment: .leading)
+
             ForEach(0..<Self.slots, id: \.self) { slot in
                 if slot < row.spots.count {
                     let spot = row.spots[slot]
-                    SpotCell(spot: spot, isSelected: spot.id == selectedSpotID, highlight: highlight(spot)) {
+
+                    SpotCell(
+                        spot: spot,
+                        isSelected: spot.id == selectedSpotID,
+                        highlight: highlight(spot),
+                        allowAllStates: allowAllStates
+                    ) {
                         onSelect(spot)
                     }
+
                 } else {
                     Color.clear
                         .frame(maxWidth: .infinity)
@@ -107,12 +131,14 @@ struct SpotLegend: View {
     var body: some View {
         ViewThatFits(in: .horizontal) {
             HStack(spacing: 16) { items }
+
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 16) {
                     LegendDot(title: "Free", fill: Palette.greenSoft, stroke: Palette.greenInk)
                     LegendDot(title: "Taken", fill: Palette.card, stroke: Palette.line)
                     LegendDot(title: "Reserved", fill: Palette.amberSoft, stroke: Palette.amberInk)
                 }
+
                 HStack(spacing: 16) {
                     LegendDot(title: "Unavailable", fill: Palette.neutral, stroke: Palette.muted)
                     LegendDot(title: "You", fill: Palette.accentSoft, stroke: Palette.accent)
@@ -140,10 +166,12 @@ struct LaneDivider: View {
                 HStack {
                     ForEach(0..<6, id: \.self) { _ in
                         Spacer(minLength: 0)
+
                         Rectangle()
                             .fill(Palette.muted.opacity(0.4))
                             .frame(width: 14, height: 2)
                     }
+
                     Spacer(minLength: 0)
                 }
                 .padding(.horizontal, 16)
@@ -159,9 +187,11 @@ struct ZoneHeader: View {
             Rectangle()
                 .fill(Palette.accent)
                 .frame(width: 3, height: 14)
+
             Text(name)
                 .font(AppFont.heading2)
                 .foregroundStyle(Palette.accent)
+
             Spacer(minLength: 0)
         }
     }
@@ -173,16 +203,20 @@ struct EntranceBar: View {
             Image(systemName: "arrow.left.arrow.right")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(Palette.muted)
+
             Text("ENTRANCE / EXIT")
                 .font(AppFont.overline)
                 .tracking(0.6)
                 .foregroundStyle(Palette.ink)
+
             Rectangle()
                 .fill(Palette.line)
                 .frame(height: 1)
+
             Image(systemName: "arrow.right")
                 .font(.system(size: 10, weight: .semibold))
                 .foregroundStyle(Palette.muted)
+
             Text("N")
                 .font(AppFont.caption)
                 .foregroundStyle(Palette.muted)
