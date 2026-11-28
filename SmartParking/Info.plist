@@ -25,6 +25,8 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>ParkWise uses the camera to add a photo to a report about a parking spot.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Parkwise uses your location to remember where you parked and guide you back to your car.</string>
 	<key>NSMicrophoneUsageDescription</key>
