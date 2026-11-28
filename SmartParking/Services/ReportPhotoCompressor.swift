@@ -38,6 +38,7 @@ enum ReportPhotoError: LocalizedError {
 enum ReportPhotoCompressor {
 
     static let maxBytes = 300 * 1024
+    static let maxDimension: CGFloat = 1280
 
     private static let qualities: [CGFloat] = [
         0.80,
@@ -77,7 +78,7 @@ enum ReportPhotoCompressor {
         )
     }
 
-    // MARK: - Baseline implementation
+    // MARK: - Optimized implementation
 
     private static func compressSynchronously(
         _ originalData: Data
@@ -99,8 +100,8 @@ enum ReportPhotoCompressor {
             throw ReportPhotoError.invalidImage
         }
 
-        // Baseline: start at the original image resolution.
-        var image = normalized(original)
+        // Resize before the first JPEG encoding.
+        var image = prepareInitialImage(original)
         var attempts = 0
 
         while true {
@@ -153,6 +154,45 @@ enum ReportPhotoCompressor {
 
             image = resized(image, to: smallerSize)
         }
+    }
+
+    // MARK: - Initial thumbnail optimization
+
+    private static func prepareInitialImage(
+        _ original: UIImage
+    ) -> UIImage {
+
+        let width = original.size.width * original.scale
+        let height = original.size.height * original.scale
+        let longestSide = max(width, height)
+
+        // Do not enlarge an image that is already small enough.
+        guard longestSide > maxDimension else {
+            return normalized(original)
+        }
+
+        let ratio = maxDimension / longestSide
+
+        let targetSize = CGSize(
+            width: max(1, floor(width * ratio)),
+            height: max(1, floor(height * ratio))
+        )
+
+        if let thumbnail = original.preparingThumbnail(
+            of: targetSize
+        ) {
+            let prepared = normalized(thumbnail)
+
+            let preparedWidth = prepared.size.width * prepared.scale
+            let preparedHeight = prepared.size.height * prepared.scale
+
+            if max(preparedWidth, preparedHeight) <= maxDimension {
+                return prepared
+            }
+        }
+
+        // Fallback if UIKit cannot prepare a valid thumbnail.
+        return resized(original, to: targetSize)
     }
 
     // MARK: - Image orientation
