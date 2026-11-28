@@ -16,6 +16,7 @@ targets:
         APIBaseURL: $(API_BASE_URL)
         NSLocationWhenInUseUsageDescription: Parkwise uses your location to remember where you parked and guide you back to your car.
         NSMicrophoneUsageDescription: ParkWise uses the microphone to search for a parking spot by voice.
+        NSCameraUsageDescription: ParkWise uses the camera to add a photo to a report about a parking spot.
         NSSpeechRecognitionUsageDescription: ParkWise turns what you say into a search for a parking spot.
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
