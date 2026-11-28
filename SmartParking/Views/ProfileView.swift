@@ -6,6 +6,8 @@ struct ProfileView: View {
     @ObservedObject var reservationViewModel: ReservationViewModel
     let actionQueue: ActionQueueing
 
+    var onMyReports: (() -> Void)? = nil
+
     @State private var isConfirmingSignOut = false
     @State private var pendingActions: [QueuedAction] = []
     @State private var failures: [ActionQueueFailure] = []
@@ -19,6 +21,15 @@ struct ProfileView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     if let user = viewModel.user {
                         userCard(user)
+                    }
+
+                    // Parking spot reports.
+                    if onMyReports != nil {
+                        SectionLabel(text: "Reports")
+                            .padding(.top, 24)
+
+                        myReportsCard
+                            .padding(.top, 8)
                     }
 
                     if !pendingActions.isEmpty {
@@ -104,8 +115,52 @@ struct ProfileView: View {
                 viewModel.signOut()
             }
         } message: {
-            Text("You can keep browsing as a guest and log in again anytime.")
+            Text(
+                "You can keep browsing as a guest and log in again anytime. Unsent parking spot reports saved on this phone will be removed."
+            )
         }
+    }
+
+    // MARK: - My reports
+
+    private var myReportsCard: some View {
+        Button {
+            onMyReports?()
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "exclamationmark.bubble")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundStyle(Palette.accent)
+                    .frame(width: 42, height: 42)
+                    .background(
+                        RoundedRectangle(
+                            cornerRadius: Radius.small
+                        )
+                        .fill(Palette.accentSoft)
+                    )
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("My reports")
+                        .font(AppFont.heading1)
+                        .foregroundStyle(Palette.ink)
+
+                    Text("View reports about parking spots.")
+                        .font(AppFont.caption)
+                        .foregroundStyle(Palette.muted)
+                }
+
+                Spacer(minLength: 0)
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Palette.muted)
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+            .cardStyle()
+        }
+        .buttonStyle(.plain)
     }
 
     private func refreshData() async {
@@ -118,7 +173,8 @@ struct ProfileView: View {
             pendingActions = try await actionQueue.pendingActions()
             queueErrorMessage = nil
         } catch {
-            queueErrorMessage = "Could not load pending actions: \(error.localizedDescription)"
+            queueErrorMessage =
+                "Could not load pending actions: \(error.localizedDescription)"
         }
     }
 
@@ -138,10 +194,14 @@ struct ProfileView: View {
                 .background(Circle().fill(Palette.accent))
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(user.displayName.isEmpty ? "Parkwise user" : user.displayName)
-                    .font(AppFont.heading1)
-                    .foregroundStyle(Palette.ink)
-                    .lineLimit(1)
+                Text(
+                    user.displayName.isEmpty
+                        ? "Parkwise user"
+                        : user.displayName
+                )
+                .font(AppFont.heading1)
+                .foregroundStyle(Palette.ink)
+                .lineLimit(1)
 
                 Text(user.email)
                     .font(AppFont.caption)
@@ -157,7 +217,11 @@ struct ProfileView: View {
 
     private var pendingActionsCard: some View {
         VStack(spacing: 0) {
-            ForEach(Array(pendingActions.enumerated()), id: \.element.id) { index, action in
+            ForEach(
+                Array(pendingActions.enumerated()),
+                id: \.element.id
+            ) { index, action in
+
                 QueueActionRow(
                     title: actionTitle(action.kind),
                     subtitle: "Reservation \(action.reservationId)",
@@ -192,7 +256,11 @@ struct ProfileView: View {
 
     private var failuresCard: some View {
         VStack(spacing: 0) {
-            ForEach(Array(failures.enumerated()), id: \.offset) { index, failure in
+            ForEach(
+                Array(failures.enumerated()),
+                id: \.offset
+            ) { index, failure in
+
                 QueueActionRow(
                     title: actionTitle(failure.kind),
                     subtitle: "Reservation \(failure.reservationId)",
@@ -217,13 +285,16 @@ struct ProfileView: View {
         switch kind {
         case .checkIn:
             return "Check-in"
+
         case .release:
             return "Release reservation"
         }
     }
 
     private var historyCard: some View {
-        ReservationHistoryCard(reservations: reservationViewModel.history)
+        ReservationHistoryCard(
+            reservations: reservationViewModel.history
+        )
     }
 }
 
@@ -235,6 +306,7 @@ private struct QueueActionRow: View {
     let color: Color
     let background: Color
     let detail: String
+
     var retryAction: (() -> Void)? = nil
 
     var body: some View {
@@ -264,12 +336,20 @@ private struct QueueActionRow: View {
                     Text(detail)
                         .font(AppFont.caption)
                         .foregroundStyle(color)
-                        .fixedSize(horizontal: false, vertical: true)
+                        .fixedSize(
+                            horizontal: false,
+                            vertical: true
+                        )
 
                     if let date {
-                        Text(date.formatted(date: .abbreviated, time: .shortened))
-                            .font(AppFont.monoData)
-                            .foregroundStyle(Palette.muted)
+                        Text(
+                            date.formatted(
+                                date: .abbreviated,
+                                time: .shortened
+                            )
+                        )
+                        .font(AppFont.monoData)
+                        .foregroundStyle(Palette.muted)
                     }
                 }
 
@@ -331,8 +411,14 @@ struct ReservationHistoryCard: View {
                 .cardStyle()
         } else {
             VStack(spacing: 0) {
-                ForEach(Array(reservations.enumerated()), id: \.element.id) { index, reservation in
-                    ReservationHistoryRow(reservation: reservation)
+                ForEach(
+                    Array(reservations.enumerated()),
+                    id: \.element.id
+                ) { index, reservation in
+
+                    ReservationHistoryRow(
+                        reservation: reservation
+                    )
 
                     if index < reservations.count - 1 {
                         Rectangle()
@@ -360,9 +446,13 @@ private struct ReservationHistoryRow: View {
 
             Spacer(minLength: 8)
 
-            Text(reservation.createdAt.formatted(.dateTime.month(.abbreviated).day()))
-                .font(AppFont.monoData)
-                .foregroundStyle(Palette.muted)
+            Text(
+                reservation.createdAt.formatted(
+                    .dateTime.month(.abbreviated).day()
+                )
+            )
+            .font(AppFont.monoData)
+            .foregroundStyle(Palette.muted)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
@@ -376,13 +466,32 @@ private struct ReservationHistoryRow: View {
         let (icon, color, background): (String, Color, Color) = {
             switch reservation.status {
             case .fulfilled, .released:
-                return ("checkmark", Palette.greenInk, Palette.greenSoft)
+                return (
+                    "checkmark",
+                    Palette.greenInk,
+                    Palette.greenSoft
+                )
+
             case .expired:
-                return ("xmark", Palette.redInk, Palette.redSoft)
+                return (
+                    "xmark",
+                    Palette.redInk,
+                    Palette.redSoft
+                )
+
             case .cancelled:
-                return ("minus", Palette.muted, Palette.screen)
+                return (
+                    "minus",
+                    Palette.muted,
+                    Palette.screen
+                )
+
             case .active:
-                return ("clock", Palette.accent, Palette.accentSoft)
+                return (
+                    "clock",
+                    Palette.accent,
+                    Palette.accentSoft
+                )
             }
         }()
 

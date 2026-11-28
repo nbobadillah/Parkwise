@@ -1,10 +1,14 @@
 import SwiftUI
 
 @main
+@MainActor
 struct SmartParkingApp: App {
     @Environment(\.scenePhase) private var scenePhase
-    @StateObject private var authViewModel: AuthViewModel
 
+    @StateObject private var authViewModel: AuthViewModel
+    @StateObject private var reportCoordinator: ReportSessionCoordinator
+
+    private let authService: AuthServicing
     private let parkingService: ParkingServicing
     private let reservationService: ReservationServicing
     private let locationService: LocationService
@@ -21,6 +25,7 @@ struct SmartParkingApp: App {
         let parkingService = BackendParkingService(
             token: { authService.token }
         )
+
         let reservationService = BackendReservationService(
             token: { authService.token }
         )
@@ -34,6 +39,7 @@ struct SmartParkingApp: App {
         TelemetryService.shared.token = { authService.token }
         CrashMonitor.shared.start()
 
+        self.authService = authService
         self.parkingService = parkingService
         self.reservationService = reservationService
         self.locationService = locationService
@@ -47,6 +53,12 @@ struct SmartParkingApp: App {
                 networkMonitor: networkMonitor
             )
         )
+
+        _reportCoordinator = StateObject(
+            wrappedValue: ReportSessionCoordinator(
+                networkMonitor: networkMonitor
+            )
+        )
     }
 
     var body: some Scene {
@@ -54,7 +66,10 @@ struct SmartParkingApp: App {
             Group {
                 if authViewModel.isRestoring {
                     ProgressView()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .frame(
+                            maxWidth: .infinity,
+                            maxHeight: .infinity
+                        )
                         .background(Palette.screen)
                 } else {
                     RootView(
@@ -68,16 +83,30 @@ struct SmartParkingApp: App {
                 }
             }
             .environmentObject(authViewModel)
+            .environmentObject(reportCoordinator)
             .task {
                 await authViewModel.restoreSession()
                 TelemetryService.shared.trackAppOpened()
+            }
+            .onChange(
+                of: authViewModel.user?.id,
+                initial: true
+            ) { _, userId in
+
+                reportCoordinator.setSession(
+                    userId: userId,
+                    token: authService.token
+                )
             }
             .onChange(of: scenePhase) { _, phase in
                 switch phase {
                 case .active:
                     CrashMonitor.shared.sessionDidBecomeActive()
+                    reportCoordinator.retrySession()
+
                 case .background:
                     CrashMonitor.shared.sessionDidEnd()
+
                 default:
                     break
                 }
