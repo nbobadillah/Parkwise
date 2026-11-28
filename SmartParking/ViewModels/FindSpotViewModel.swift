@@ -17,6 +17,21 @@ private final class SpotMemoryCacheEntry: NSObject {
     }
 }
 
+struct SpotSearchSession: Equatable {
+    enum Mode: String {
+        case voice
+        case text
+    }
+
+    let id: String
+    let mode: Mode
+    let voiceFallback: Bool
+
+    static func newID() -> String {
+        (0..<16).map { _ in String(Int.random(in: 0..<16), radix: 16) }.joined()
+    }
+}
+
 @MainActor
 final class FindSpotViewModel: ObservableObject {
     private static let filterPreferenceKey = "findSpot.lastFilter"
@@ -38,6 +53,15 @@ final class FindSpotViewModel: ObservableObject {
 
     @Published var searchQuery = ""
     @Published private(set) var debouncedQuery = ""
+    @Published private(set) var spokenPhrase: String?
+    @Published private(set) var lastLoadFromMemory = false
+
+    private(set) var search: SpotSearchSession?
+    private var searchReported = false
+    private var typingAfterVoice = false
+    private var applyingVoice = false
+    private var searchSettle: Task<Void, Never>?
+    private var typingSubscription: AnyCancellable?
 
     private let service: ParkingServicing
     private let memoryCache = NSCache<NSString, SpotMemoryCacheEntry>()
@@ -80,6 +104,98 @@ final class FindSpotViewModel: ObservableObject {
             .sink { [weak self] query in
                 self?.debouncedQuery = query
             }
+
+        typingSubscription = $searchQuery
+            .dropFirst()
+            .removeDuplicates()
+            .sink { [weak self] query in
+                self?.queryTyped(query)
+            }
+    }
+
+    func searchPhrase(
+        _ phrase: String,
+        query: VoiceQuery,
+        spoken: Bool,
+        levels: [LevelSummary],
+        destinationID: String?
+    ) async {
+        startSearch(spoken ? .voice : .text)
+        spokenPhrase = spoken ? phrase : nil
+        applyingVoice = true
+        filter = query.findSpotFilter
+        searchQuery = query.searchText
+        debouncedQuery = query.searchText
+        applyingVoice = false
+        await load(levels: levels, destinationID: destinationID)
+        reportSearch()
+    }
+
+    func typeAfterVoice(_ words: String) {
+        endSearch()
+        typingAfterVoice = true
+        searchQuery = words
+    }
+
+    func filterChosen(_ value: FindSpotFilter) {
+        endSearch()
+        filter = value
+    }
+
+    func spotSelected(_ spot: SpotListing) {
+        reportSearch()
+        TelemetryService.shared.trackSpotSelected(
+            levelCode: spot.levelCode,
+            spotCode: spot.code,
+            searchId: search?.id,
+            mode: search?.mode.rawValue
+        )
+    }
+
+    func reportSearch() {
+        guard let search, !searchReported else { return }
+        searchReported = true
+        TelemetryService.shared.trackSpotSearch(
+            searchId: search.id,
+            mode: search.mode.rawValue,
+            resultCount: spots(matching: searchQuery).count,
+            fromCache: lastLoadFromMemory,
+            offline: isShowingCachedData,
+            voiceFallback: search.voiceFallback
+        )
+    }
+
+    private func queryTyped(_ query: String) {
+        guard !applyingVoice else { return }
+        spokenPhrase = nil
+        if query.trimmingCharacters(in: .whitespaces).isEmpty {
+            endSearch()
+            return
+        }
+        if search?.mode != .text {
+            startSearch(.text, voiceFallback: typingAfterVoice)
+        }
+        searchSettle?.cancel()
+        searchSettle = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(1))
+            guard !Task.isCancelled else { return }
+            self?.reportSearch()
+        }
+    }
+
+    private func startSearch(_ mode: SpotSearchSession.Mode, voiceFallback: Bool = false) {
+        searchSettle?.cancel()
+        search = SpotSearchSession(id: SpotSearchSession.newID(), mode: mode, voiceFallback: voiceFallback)
+        spokenPhrase = nil
+        searchReported = false
+        typingAfterVoice = false
+    }
+
+    private func endSearch() {
+        searchSettle?.cancel()
+        search = nil
+        spokenPhrase = nil
+        searchReported = false
     }
 
     func load(
@@ -105,6 +221,7 @@ final class FindSpotViewModel: ObservableObject {
             forKey: cacheKey as NSString
         ),
            Date().timeIntervalSince(cached.savedAt) < Self.cacheTTL {
+            lastLoadFromMemory = true
             spots = cached.spots
             isShowingCachedData = cached.fromResponseCache
             errorMessage = nil
@@ -179,6 +296,7 @@ final class FindSpotViewModel: ObservableObject {
                 $0.fromCache
             }
 
+            lastLoadFromMemory = false
             spots = processedSpots
             isShowingCachedData = cameFromResponseCache
 
@@ -200,14 +318,17 @@ final class FindSpotViewModel: ObservableObject {
     }
 
     func spots(matching query: String) -> [SpotListing] {
-        guard !query.isEmpty else {
+        let terms = query.split(whereSeparator: \.isWhitespace).map(String.init)
+        guard !terms.isEmpty else {
             return spots
         }
 
-        return spots.filter {
-            $0.code.localizedCaseInsensitiveContains(query)
-                || $0.levelCode.localizedCaseInsensitiveContains(query)
-                || $0.zone.localizedCaseInsensitiveContains(query)
+        return spots.filter { spot in
+            terms.allSatisfy { term in
+                spot.code.localizedCaseInsensitiveContains(term)
+                    || spot.levelCode.localizedCaseInsensitiveContains(term)
+                    || spot.zone.localizedCaseInsensitiveContains(term)
+            }
         }
     }
 

@@ -46,6 +46,11 @@ struct SpotFilters: Equatable {
 struct Building: Codable, Identifiable, Equatable {
     let id: String
     let name: String
+    var imageUrl: String? = nil
+
+    var photoURL: URL? {
+        imageUrl.flatMap { URL(string: $0, relativeTo: APIClient.configuredBaseURL)?.absoluteURL }
+    }
 }
 
 struct NearbyLot: Codable, Identifiable, Equatable {

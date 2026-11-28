@@ -4,10 +4,16 @@ struct FindSpotView: View {
     let levels: [LevelSummary]
     let destinationID: String?
     let initialFilter: FindSpotFilter
+    let openReservationLevel: String?
     let onReserve: (SpotListing) -> Void
+
+    private let service: ParkingServicing
 
     @ObservedObject private var networkMonitor: NetworkMonitor
     @StateObject private var viewModel: FindSpotViewModel
+    @State private var showVoiceSearch = false
+    @State private var pendingVoice: VoiceSearchViewModel.Outcome?
+    @FocusState private var searchFocused: Bool
 
     init(
         levels: [LevelSummary],
@@ -15,12 +21,15 @@ struct FindSpotView: View {
         service: ParkingServicing,
         networkMonitor: NetworkMonitor,
         initialFilter: FindSpotFilter = .available,
+        openReservationLevel: String? = nil,
         onReserve: @escaping (SpotListing) -> Void
     ) {
         self.levels = levels
         self.destinationID = destinationID
         self.initialFilter = initialFilter
+        self.openReservationLevel = openReservationLevel
         self.onReserve = onReserve
+        self.service = service
 
         _networkMonitor = ObservedObject(
             wrappedValue: networkMonitor
@@ -69,6 +78,12 @@ struct FindSpotView: View {
                         )
                     }
 
+                    if let phrase = viewModel.spokenPhrase {
+                        VoicePhraseCard(phrase: phrase) {
+                            showVoiceSearch = true
+                        }
+                    }
+
                     if viewModel.isShowingCachedData {
                         Label(
                             "Showing saved results",
@@ -83,7 +98,7 @@ struct FindSpotView: View {
                             spot: recommendedSpot,
                             isRecommended: true
                         ) {
-                            onReserve(recommendedSpot)
+                            select(recommendedSpot)
                         }
                     }
 
@@ -106,7 +121,7 @@ struct FindSpotView: View {
                         VStack(spacing: 16) {
                             ForEach(filteredSpots) { spot in
                                 SpotResultRow(spot: spot) {
-                                    onReserve(spot)
+                                    select(spot)
                                 }
                             }
                         }
@@ -136,6 +151,42 @@ struct FindSpotView: View {
                 destinationID: destinationID
             )
         }
+        .fullScreenCover(isPresented: $showVoiceSearch, onDismiss: applyVoice) {
+            VoiceSearchView(
+                destinationID: destinationID,
+                openReservationLevel: openReservationLevel,
+                service: service,
+                networkMonitor: networkMonitor
+            ) { outcome in
+                pendingVoice = outcome
+            }
+        }
+    }
+
+    private func select(_ spot: SpotListing) {
+        viewModel.spotSelected(spot)
+        onReserve(spot)
+    }
+
+    private func applyVoice() {
+        guard let outcome = pendingVoice else { return }
+        pendingVoice = nil
+        switch outcome {
+        case .phrase(let phrase, let query, let spoken):
+            searchFocused = false
+            Task {
+                await viewModel.searchPhrase(
+                    phrase,
+                    query: query,
+                    spoken: spoken,
+                    levels: levels,
+                    destinationID: destinationID
+                )
+            }
+        case .typeInstead(let words):
+            viewModel.typeAfterVoice(words)
+            searchFocused = true
+        }
     }
 
     private var header: some View {
@@ -153,7 +204,7 @@ struct FindSpotView: View {
                             title: item.rawValue,
                             isSelected: viewModel.filter == item
                         ) {
-                            viewModel.filter = item
+                            viewModel.filterChosen(item)
 
                             TelemetryService.shared.trackFilterApplied(
                                 filter: item
@@ -203,8 +254,21 @@ struct FindSpotView: View {
             .font(AppFont.body)
             .foregroundStyle(Palette.ink)
             .autocorrectionDisabled()
+            .focused($searchFocused)
+
+            Button {
+                searchFocused = false
+                showVoiceSearch = true
+            } label: {
+                Image(systemName: "mic.fill")
+                    .font(.system(size: 15))
+                    .foregroundStyle(Palette.accent)
+                    .frame(width: 36, height: 40)
+            }
+            .accessibilityLabel("Search by voice")
         }
-        .padding(.horizontal, 12)
+        .padding(.leading, 12)
+        .padding(.trailing, 2)
         .frame(height: 40)
         .background(
             RoundedRectangle(

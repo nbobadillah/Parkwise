@@ -3,8 +3,13 @@ import SwiftUI
 struct LotPhoto: View {
     @StateObject private var viewModel: LotPhotoViewModel
 
-    init(url: URL?) {
-        _viewModel = StateObject(wrappedValue: LotPhotoViewModel(url: url))
+    private let width: CGFloat?
+    private let height: CGFloat
+
+    init(url: URL?, cache: LotImageCaching = LotImageCache.shared, width: CGFloat? = nil, height: CGFloat = 140) {
+        _viewModel = StateObject(wrappedValue: LotPhotoViewModel(url: url, cache: cache))
+        self.width = width
+        self.height = height
     }
 
     var body: some View {
@@ -12,8 +17,8 @@ struct LotPhoto: View {
             Image(uiImage: image)
                 .resizable()
                 .scaledToFill()
-                .frame(maxWidth: .infinity)
-                .frame(height: 140)
+                .frame(width: width, height: height)
+                .frame(maxWidth: width == nil ? .infinity : width)
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         }
     }

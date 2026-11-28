@@ -9,6 +9,12 @@ protocol LotImageCaching: Sendable {
 actor LotImageCache: LotImageCaching {
     static let shared = LotImageCache()
 
+    static let buildings = LotImageCache(
+        directory: FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0].appending(path: "BuildingImages"),
+        memoryCountLimit: 10,
+        memoryCostLimit: 10 * 1024 * 1024
+    )
+
     private let memory = NSCache<NSURL, UIImage>()
     private let directory: URL
     private let session: URLSession

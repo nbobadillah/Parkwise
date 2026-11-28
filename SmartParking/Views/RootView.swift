@@ -254,7 +254,8 @@ struct RootView: View {
                         destinationID: homeViewModel.destinationID,
                         service: parkingService,
                         networkMonitor: networkMonitor,
-                        initialFilter: filter
+                        initialFilter: filter,
+                        openReservationLevel: reservationViewModel.activeReservation?.levelCode
                     ) { spot in
                         selectedSpot = spot
                         tab = .reserve
