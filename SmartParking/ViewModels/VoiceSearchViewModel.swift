@@ -42,6 +42,7 @@ final class VoiceSearchViewModel: ObservableObject {
     private let clock: () -> Date
 
     private var session: Task<Void, Never>?
+    private var preview: Task<Void, Never>?
     private var startedAt: Date?
     private var tracked = false
     private var generation = 0
@@ -155,7 +156,10 @@ final class VoiceSearchViewModel: ObservableObject {
             await finish(phrase)
         case .heard(let phrase, isFinal: false):
             words = phrase
-            Task { [weak self] in
+            preview?.cancel()
+            preview = Task { [weak self] in
+                try? await Task.sleep(for: .milliseconds(300))
+                guard !Task.isCancelled else { return }
                 await self?.interpretPreview(phrase)
             }
         case .failed(let reason):
@@ -176,6 +180,7 @@ final class VoiceSearchViewModel: ObservableObject {
     }
 
     private func finish(_ phrase: String) async {
+        preview?.cancel()
         generation += 1
         let current = generation
         words = phrase
@@ -200,6 +205,7 @@ final class VoiceSearchViewModel: ObservableObject {
     }
 
     private func fail(_ reason: SpeechFailure) {
+        preview?.cancel()
         generation += 1
         track(reason.outcome)
         failure = reason
@@ -248,6 +254,7 @@ final class VoiceSearchViewModel: ObservableObject {
     }
 
     private func endSession() {
+        preview?.cancel()
         generation += 1
         session?.cancel()
         session = nil
