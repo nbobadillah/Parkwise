@@ -1,5 +1,6 @@
 import Combine
 import Foundation
+import os
 
 @MainActor
 final class VoiceSearchViewModel: ObservableObject {
@@ -16,6 +17,9 @@ final class VoiceSearchViewModel: ObservableObject {
     }
 
     static let languageKey = "voiceSearch.language"
+
+    private static let signposter = OSSignposter(subsystem: "com.parkwise", category: .pointsOfInterest)
+    private static let logger = Logger(subsystem: "com.parkwise", category: "VoiceSearch")
 
     @Published private(set) var status: Status = .ready
     @Published private(set) var words = ""
@@ -41,6 +45,8 @@ final class VoiceSearchViewModel: ObservableObject {
     private var startedAt: Date?
     private var tracked = false
     private var generation = 0
+    private var interpreted = 0
+    private var thrownAway = 0
     private var networkSubscription: AnyCancellable?
 
     init(
@@ -107,6 +113,8 @@ final class VoiceSearchViewModel: ObservableObject {
         failure = nil
         startedAt = clock()
         tracked = false
+        interpreted = 0
+        thrownAway = 0
 
         let stream = recognizer.listen(language: language, offline: !networkMonitor.isConnected)
         session = Task { [weak self] in
@@ -158,8 +166,12 @@ final class VoiceSearchViewModel: ObservableObject {
     private func interpretPreview(_ phrase: String) async {
         generation += 1
         let current = generation
-        let query = await interpreter.interpret(phrase, language: language)
-        guard current == generation, isListening else { return }
+        interpreted += 1
+        let query = await measuredInterpretation(of: phrase)
+        guard current == generation, isListening else {
+            thrownAway += 1
+            return
+        }
         heard = query
     }
 
@@ -168,7 +180,8 @@ final class VoiceSearchViewModel: ObservableObject {
         let current = generation
         words = phrase
         track("ok")
-        let query = await interpreter.interpret(phrase, language: language)
+        let query = await measuredInterpretation(of: phrase)
+        Self.logger.info("voice previews: \(self.interpreted) interpreted, \(self.thrownAway) thrown away")
         guard current == generation else { return }
         heard = query
         guard query.understood else {
@@ -177,6 +190,13 @@ final class VoiceSearchViewModel: ObservableObject {
         }
         remember(phrase)
         complete(.phrase(phrase, query, spoken: true))
+    }
+
+    private func measuredInterpretation(of phrase: String) async -> VoiceQuery {
+        let state = Self.signposter.beginInterval("interpret")
+        let query = await interpreter.interpret(phrase, language: language)
+        Self.signposter.endInterval("interpret", state)
+        return query
     }
 
     private func fail(_ reason: SpeechFailure) {
