@@ -9,6 +9,7 @@ struct HomeView: View {
     let onOpenLevel: (LevelSummary) -> Void
     let onFindSpot: (FindSpotFilter) -> Void
     let onFindCar: () -> Void
+    let onPlanWeek: () -> Void
 
     @State private var showSpecialSpots = false
 
@@ -64,6 +65,14 @@ struct HomeView: View {
 
                 actions
                     .padding(.top, 16)
+
+                QuickAction(
+                    title: "Plan your week",
+                    icon: "calendar",
+                    tint: Tint(soft: Palette.accentSoft, strong: Palette.accent),
+                    action: onPlanWeek
+                )
+                .padding(.top, 8)
 
                 specialSpotsAction
                     .padding(.top, 12)

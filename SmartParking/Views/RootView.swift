@@ -4,6 +4,7 @@ import UIKit
 enum HomeRoute {
     case dashboard
     case findSpot(FindSpotFilter)
+    case weekPlan
 }
 
 enum MapRoute {
@@ -21,6 +22,7 @@ struct RootView: View {
     let parkingService: ParkingServicing
     let reservationService: ReservationServicing
     let actionQueue: ActionQueueing
+    private let weekForecastService: WeekForecastServicing = BackendWeekForecastService()
 
     @StateObject private var homeViewModel: HomeViewModel
     @StateObject private var reservationViewModel: ReservationViewModel
@@ -240,6 +242,9 @@ struct RootView: View {
                         onFindCar: {
                             mapRoute = .findCar
                             tab = .map
+                        },
+                        onPlanWeek: {
+                            homeRoute = .weekPlan
                         }
                     )
 
@@ -255,6 +260,18 @@ struct RootView: View {
                         tab = .reserve
                     }
                     .id(filter)
+
+                case .weekPlan:
+                    WeekPlanView(
+                        service: weekForecastService,
+                        arrivalAt: homeViewModel.arrivalAt,
+                        networkMonitor: networkMonitor,
+                        onBack: { homeRoute = .dashboard },
+                        onUseTime: { date in
+                            homeViewModel.arrivalAt = date
+                            homeRoute = .dashboard
+                        }
+                    )
                 }
             }
 
